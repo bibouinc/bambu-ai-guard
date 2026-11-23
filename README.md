@@ -34,23 +34,19 @@ Only the flagship X1C ships with built-in AI spaghetti detection, and even then,
 ## How It Works (In 3 Simple Steps)
 
 ```mermaid
-flowchart TD
-    P(["🖨️ 1. Your 3D Printer Starts Printing"])
-    T["⏱️ 2. Wait for the Next Checkpoint<br/>Layer 1 Multi-Check · Every X Layers or Y Minutes"]
-    C["📸 3. Snap a Crystal-Clear Photo<br/>Erases the moving printhead out of the way"]
-    AI["🧠 4. Ask Google Gemini Decisions API<br/>──────────────────────────<br/>• Plastic spaghetti?<br/>• Corners lifting up?<br/>• Part came unstuck?<br/>• First layer messy?<br/>• Printhead blocking view?<br/>• Overall score (1 to 4)?"]
-    OK(["✅ All Good! Keep Printing & Log It"])
-    FAIL(["🚨 Problem Found! Hit PAUSE & Send Alert"])
+flowchart LR
+    T(["⏱️ Print Checkpoint<br/>Layer 1 · Every X Layers / Y Min"])
+    C["📸 Clear Photo<br/>Erases Printhead"]
+    AI["🧠 Gemini Decisions API<br/>Spaghetti? · Warping?<br/>Unstuck? · Layer 1? · Score 1–4"]
+    OK(["✅ Keep Printing"])
+    FAIL(["🚨 Auto-Pause & Alert"])
 
-    P --> T
-    T --> C
-    C --> AI
-    AI -->|"Clean Print"| OK
-    OK -.->|"Loop until print finishes"| T
-    AI -->|"Defect Detected"| FAIL
+    T --> C --> AI
+    AI -->|"OK"| OK
+    OK -.->|"Loop"| T
+    AI -->|"Defect"| FAIL
 
-    style P fill:#E7F2DF,stroke:#1A260E,stroke-width:2px,color:#1A260E
-    style T fill:#FDFFFB,stroke:#1A260E,stroke-width:2px,color:#1A260E
+    style T fill:#E7F2DF,stroke:#1A260E,stroke-width:2px,color:#1A260E
     style C fill:#FDFFFB,stroke:#1A260E,stroke-width:2px,color:#1A260E
     style AI fill:#ECD8FF,stroke:#1A260E,stroke-width:2px,color:#1A260E
     style OK fill:#D7F3C2,stroke:#217B44,stroke-width:2px,color:#1A260E

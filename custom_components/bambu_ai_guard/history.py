@@ -28,27 +28,53 @@ class PrintHistoryStore:
         self._lock = asyncio.Lock()
         self.prints: list[dict[str, Any]] = []
         self.recent_inspections: list[dict[str, Any]] = []
+        self.simulations: dict[str, dict[str, Any]] = {}
         self._active_print: dict[str, Any] | None = None
 
         # Media directory for failure/warning snapshots
         self._media_dir = Path(hass.config.path("www", DOMAIN, printer_serial))
 
     async def async_load(self) -> None:
-        """Load persisted print history from disk."""
+        """Load persisted print history and saved simulation verdicts from disk."""
         async with self._lock:
             data = await self._store.async_load()
             if isinstance(data, dict):
                 self.prints = list(data.get("prints", []))
                 self.recent_inspections = list(data.get("recent_inspections", []))
+                self.simulations = dict(data.get("simulations", {}))
 
     async def _async_save(self) -> None:
-        """Persist print history atomically."""
+        """Persist print history and simulation results atomically."""
         await self._store.async_save(
             {
                 "prints": self.prints,
                 "recent_inspections": self.recent_inspections[-200:],
+                "simulations": self.simulations,
             }
         )
+
+    async def async_record_simulation(
+        self, video_id: str, progress: dict[str, Any]
+    ) -> None:
+        """Persist a completed timelapse replay simulation verdict by video_id."""
+        async with self._lock:
+            results = progress.get("results") or []
+            max_sp = max((float(r.get("spaghetti_pct") or 0.0) for r in results), default=0.0)
+            max_wp = max((float(r.get("warping_pct") or 0.0) for r in results), default=0.0)
+            max_dt = max((float(r.get("detachment_pct") or 0.0) for r in results), default=0.0)
+            self.simulations[video_id] = {
+                "video_name": progress.get("video_name"),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "total_layers": progress.get("total_layers", 0),
+                "checked": progress.get("checked", 0),
+                "would_pause": bool(progress.get("would_pause", False)),
+                "pause_layer": progress.get("pause_layer"),
+                "pause_reason": progress.get("pause_reason"),
+                "max_spaghetti_pct": round(max_sp, 1),
+                "max_warping_pct": round(max_wp, 1),
+                "max_detachment_pct": round(max_dt, 1),
+            }
+            await self._async_save()
 
     def _save_snapshot_sync(self, filename: str, jpeg_bytes: bytes) -> str:
         """Write a JPEG snapshot to /config/www/bambu_ai_guard/<serial>/ and return its local URL."""

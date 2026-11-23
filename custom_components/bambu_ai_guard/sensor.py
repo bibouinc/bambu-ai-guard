@@ -127,6 +127,7 @@ SENSORS: tuple[BambuAIGuardSensorDescription, ...] = (
             "purge_keep_prints_setting": c.purge_keep_prints,
             "recent_prints": list(reversed(c.history.prints[-50:])),
             "recent_inspections": list(reversed(c.history.recent_inspections[-30:])),
+            "simulations": c.history.simulations,
         },
     ),
 )

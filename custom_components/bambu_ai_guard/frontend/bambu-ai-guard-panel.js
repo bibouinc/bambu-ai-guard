@@ -1154,6 +1154,7 @@ class BambuAIGuardPanel extends HTMLElement {
   #timelapsesLoaded = false;
   #timelapses = [];
   #guardedPrints = [];
+  #simulations = {};
   #pollTimer = null;
 
   constructor() {
@@ -1389,6 +1390,20 @@ class BambuAIGuardPanel extends HTMLElement {
       origin.textContent = "📼 Pre-Guard Timelapse";
       badges.append(origin);
 
+      const sim = this.#simulations[item.id];
+      if (sim) {
+        const simBadge = document.createElement("span");
+        simBadge.className = "origin-badge";
+        if (sim.would_pause) {
+          simBadge.setAttribute("data-outcome", "auto_paused");
+          simBadge.textContent = `🚨 Simulated: Would Pause L${sim.pause_layer}/${sim.total_layers} (${sim.max_spaghetti_pct}% spaghetti)`;
+        } else {
+          simBadge.setAttribute("data-origin", "guarded");
+          simBadge.textContent = `✅ Simulated: Passed (${sim.checked} checks, ${sim.total_layers} layers)`;
+        }
+        badges.append(simBadge);
+      }
+
       const meta = document.createElement("span");
       meta.textContent = item.size_mb ? `${item.size_mb} MB` : "Printer SD";
       badges.append(meta);
@@ -1399,7 +1414,7 @@ class BambuAIGuardPanel extends HTMLElement {
       const simBtn = document.createElement("button");
       simBtn.type = "button";
       simBtn.className = "zest-btn secondary";
-      simBtn.innerHTML = `<ha-icon icon="mdi:play-circle-outline"></ha-icon>Simulate`;
+      simBtn.innerHTML = `<ha-icon icon="mdi:play-circle-outline"></ha-icon>${sim ? "Re-Simulate" : "Simulate"}`;
       simBtn.addEventListener("click", () => this.#startReplay(item.id));
 
       row.append(left, simBtn);
@@ -1697,6 +1712,7 @@ class BambuAIGuardPanel extends HTMLElement {
     if (histObj) {
       const ha = histObj.attributes || {};
       this.#guardedPrints = Array.isArray(ha.recent_prints) ? ha.recent_prints : [];
+      this.#simulations = ha.simulations && typeof ha.simulations === "object" ? ha.simulations : {};
       this.#renderUnifiedHistory();
     }
   }

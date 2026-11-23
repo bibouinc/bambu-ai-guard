@@ -89,8 +89,8 @@ class ReplaySimulateView(HomeAssistantView):
             return web.json_response({"error": "Missing video_id"}, status=400)
 
         if not self.simulator.running:
-            self.hass.async_create_task(
-                self.simulator.async_run_simulation(
+            async def _run_and_persist() -> None:
+                res = await self.simulator.async_run_simulation(
                     hass=self.hass,
                     inspector=coord.inspector,
                     video_id=video_id,
@@ -102,7 +102,11 @@ class ReplaySimulateView(HomeAssistantView):
                     access_code=coord.access_code,
                     on_api_call=coord.record_api_call_metrics,
                 )
-            )
+                if not res.get("error") and res.get("checked", 0) > 0:
+                    await coord.history.async_record_simulation(video_id, res)
+                    coord.async_update_listeners()
+
+            self.hass.async_create_task(_run_and_persist())
         return web.json_response({"started": True, "progress": self.simulator.progress})
 
 

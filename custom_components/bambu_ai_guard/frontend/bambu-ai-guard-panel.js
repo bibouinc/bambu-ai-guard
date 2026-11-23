@@ -9,9 +9,12 @@ const PANEL_SHEET = new CSSStyleSheet();
 PANEL_SHEET.replaceSync(`
   :host {
     display: block;
-    min-height: 100vh;
+    min-height: 100dvh;
     box-sizing: border-box;
     color-scheme: light dark;
+    container: panel / inline-size;
+    overflow-wrap: break-word;
+    --target-size: 24px;
 
     /* Native Home Assistant theme variables */
     --z-bg: var(--primary-background-color, #fafafa);
@@ -37,22 +40,46 @@ PANEL_SHEET.replaceSync(`
     font-family: var(--paper-font-body1_-_font-family, Roboto, system-ui, -apple-system, sans-serif);
   }
 
+  @media (pointer: coarse) {
+    :host {
+      --target-size: 44px;
+    }
+  }
+
+  :where(button, select, input:not([type="checkbox"], [type="radio"], [type="range"])) {
+    min-block-size: var(--target-size);
+    min-inline-size: var(--target-size);
+  }
+
+  h1, h2, h3 {
+    text-wrap: balance;
+  }
+
+  img, video {
+    max-inline-size: 100%;
+  }
+
   .topbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 20px;
+    padding: max(10px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px));
     background: var(--app-header-background-color, var(--z-surface));
     color: var(--app-header-text-color, var(--z-ink));
     border-bottom: 1px solid var(--z-border-soft);
-    gap: 12px;
+    gap: 10px;
     flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 20;
   }
 
   .topbar-left {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
+    min-width: 0;
+    flex: 1 1 auto;
   }
 
   .menu-btn {
@@ -129,11 +156,16 @@ PANEL_SHEET.replaceSync(`
 
   .tab-bar {
     display: flex;
-    gap: 6px;
-    padding: 0 20px;
+    gap: 4px;
+    padding: 0 max(12px, env(safe-area-inset-left, 0px));
     background: var(--app-header-background-color, var(--z-surface));
     border-bottom: 1px solid var(--z-border-soft);
     overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tab-bar::-webkit-scrollbar {
+    display: none;
   }
 
   .tab-btn {
@@ -142,13 +174,14 @@ PANEL_SHEET.replaceSync(`
     border: 0;
     border-bottom: 3px solid transparent;
     color: var(--z-ink-2);
-    padding: 12px 16px;
+    padding: 12px 14px;
     font-size: 0.88rem;
     font-weight: 700;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
+    gap: 7px;
     white-space: nowrap;
   }
 
@@ -164,10 +197,10 @@ PANEL_SHEET.replaceSync(`
   .tab-pane {
     max-width: 1120px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 18px max(18px, env(safe-area-inset-right, 0px)) max(28px, env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 16px;
   }
 
   .tab-pane[hidden] {
@@ -176,7 +209,7 @@ PANEL_SHEET.replaceSync(`
 
   .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
     gap: 12px;
   }
 
@@ -189,6 +222,7 @@ PANEL_SHEET.replaceSync(`
     display: flex;
     flex-direction: column;
     gap: 4px;
+    min-width: 0;
   }
 
   .kpi-label {
@@ -206,7 +240,7 @@ PANEL_SHEET.replaceSync(`
   }
 
   .kpi-value {
-    font-size: 1.5rem;
+    font-size: 1.45rem;
     font-weight: 800;
     color: var(--z-ink);
     font-variant-numeric: tabular-nums;
@@ -221,106 +255,16 @@ PANEL_SHEET.replaceSync(`
     gap: 18px;
   }
 
-  @media (max-width: 960px) {
-    .tab-bar {
-    display: flex;
-    gap: 6px;
-    padding: 0 20px;
-    background: var(--app-header-background-color, var(--z-surface));
-    border-bottom: 1px solid var(--z-border-soft);
-    overflow-x: auto;
-  }
-
-  .tab-btn {
-    appearance: none;
-    background: transparent;
-    border: 0;
-    border-bottom: 3px solid transparent;
-    color: var(--z-ink-2);
-    padding: 12px 16px;
-    font-size: 0.88rem;
-    font-weight: 700;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    white-space: nowrap;
-  }
-
-  .tab-btn ha-icon {
-    --mdc-icon-size: 18px;
-  }
-
-  .tab-btn[aria-selected="true"] {
-    color: var(--z-accent);
-    border-bottom-color: var(--z-accent);
-  }
-
-  .tab-pane {
-    max-width: 1120px;
-    margin: 0 auto;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-  }
-
-  .tab-pane[hidden] {
-    display: none;
-  }
-
-  .kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 12px;
-  }
-
-  .kpi-card {
-    background: var(--z-surface);
-    border: var(--ha-card-border-width, 1px) solid var(--z-border);
-    border-radius: var(--z-radius);
-    box-shadow: var(--z-shadow);
-    padding: 14px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .kpi-label {
-    font-size: 0.76rem;
-    font-weight: 700;
-    color: var(--z-ink-2);
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .kpi-label ha-icon {
-    --mdc-icon-size: 16px;
-    color: var(--z-accent);
-  }
-
-  .kpi-value {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: var(--z-ink);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .shell {
-      grid-template-columns: 1fr;
-    }
-  }
-
   .panel-card {
     background: var(--z-surface);
     border: var(--ha-card-border-width, 1px) solid var(--z-border);
     border-radius: var(--z-radius);
     box-shadow: var(--z-shadow);
-    padding: 18px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 13px;
+    min-width: 0;
   }
 
   .card-title {
@@ -330,6 +274,178 @@ PANEL_SHEET.replaceSync(`
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  @container panel (inline-size < 42rem) {
+    .topbar {
+      padding: max(8px, env(safe-area-inset-top, 0px)) 12px 8px 12px;
+    }
+
+    .brand-badge {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      flex-shrink: 0;
+    }
+
+    .brand-badge svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    h1 {
+      font-size: 1.02rem;
+    }
+
+    .status-pill {
+      padding: 4px 10px;
+      font-size: 0.72rem;
+    }
+
+    .tab-bar {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      padding: 0 4px;
+      gap: 0;
+    }
+
+    .tab-btn {
+      padding: 10px 6px;
+      font-size: 0.78rem;
+      gap: 5px;
+    }
+
+    .tab-pane {
+      padding: 10px 10px max(24px, env(safe-area-inset-bottom, 0px)) 10px;
+      gap: 12px;
+    }
+
+    .panel-card {
+      padding: 12px;
+      gap: 11px;
+    }
+
+    .card-title {
+      font-size: 0.94rem;
+    }
+
+    .card-title .actions-row {
+      width: 100%;
+    }
+
+    .card-title .actions-row .zest-btn {
+      flex: 1 1 0;
+      justify-content: center;
+      padding: 10px 10px;
+      font-size: 0.82rem;
+    }
+
+    .kpi-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .kpi-card {
+      padding: 10px 12px;
+    }
+
+    .kpi-value {
+      font-size: 1.2rem;
+    }
+
+    .metrics-grid {
+      gap: 8px;
+    }
+
+    .metric-box {
+      padding: 9px 10px;
+    }
+
+    .metric-head {
+      font-size: 0.74rem;
+    }
+
+    .viewport-overlay {
+      inset: auto 8px 8px 8px;
+      gap: 6px;
+    }
+
+    .viewport-top-overlay {
+      inset: 8px 8px auto 8px;
+    }
+
+    .chip {
+      font-size: 0.7rem;
+      padding: 4px 7px;
+      max-width: 68%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .last-check-bar {
+      padding: 8px 10px;
+      font-size: 0.76rem;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+
+    .control-row {
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .control-row select,
+    .control-row a.zest-btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .unified-row-head {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+    }
+
+    .unified-row-head .actions-row {
+      width: 100%;
+    }
+
+    .unified-row-head .actions-row .zest-btn {
+      flex: 1 1 0;
+      justify-content: center;
+    }
+
+    .replay-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .lightbox-bar {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+    }
+
+    .lightbox-bar .actions-row {
+      width: 100%;
+    }
+
+    .lightbox-bar .actions-row > * {
+      flex: 1 1 0;
+    }
+
+    .lightbox-bar .actions-row button {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .shell {
+      grid-template-columns: 1fr;
+    }
   }
 
   .viewport {
@@ -1399,7 +1515,7 @@ PANEL_TEMPLATE.innerHTML = `
         <span id="lightbox-title"></span>
         <div class="actions-row">
           <button type="button" class="zest-btn secondary" id="btn-lb-copy"><ha-icon icon="mdi:content-copy"></ha-icon>Copy</button>
-          <a class="zest-btn secondary" id="btn-lb-download" download="bambu-snapshot.jpg" style="text-decoration:none;"><ha-icon icon="mdi:download"></ha-icon>Download</a>
+          <button type="button" class="zest-btn secondary" id="btn-lb-download"><ha-icon icon="mdi:download"></ha-icon>Download</button>
           <form method="dialog" style="margin:0;">
             <button value="close" class="zest-btn" autofocus>Close</button>
           </form>
@@ -1449,6 +1565,10 @@ class BambuAIGuardPanel extends HTMLElement {
   #visibilityHandler = null;
   #viewportObserver = null;
   #lastCameraPictureUrl = null;
+  #lightboxFilename = "bambu-snapshot.jpg";
+  #lightboxCaption = "Bambu Snapshot";
+  #lastCheckIso = null;
+  #clockTimer = null;
 
   constructor() {
     super();
@@ -1614,10 +1734,70 @@ class BambuAIGuardPanel extends HTMLElement {
           }, 2200);
         }
       });
+      const lbDlBtn = sr.getElementById("btn-lb-download");
+      lbDlBtn.addEventListener("click", async () => {
+        const img = sr.getElementById("lightbox-img");
+        if (!img?.src) return;
+        const origHtml = `<ha-icon icon="mdi:download"></ha-icon>Download`;
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.naturalWidth || 960;
+          canvas.height = img.naturalHeight || 540;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0);
+          const jpgBlob = await new Promise((resolve) =>
+            canvas.toBlob(resolve, "image/jpeg", 0.94)
+          );
+          if (!jpgBlob) throw new Error("Blob failed");
+
+          const fname = this.#lightboxFilename || "bambu-snapshot.jpg";
+          const isCoarse = window.matchMedia?.("(pointer: coarse)")?.matches;
+          if (isCoarse && navigator.share && navigator.canShare) {
+            const file = new File([jpgBlob], fname, { type: "image/jpeg" });
+            if (navigator.canShare({ files: [file] })) {
+              try {
+                await navigator.share({ files: [file], title: this.#lightboxCaption });
+                lbDlBtn.innerHTML = `<ha-icon icon="mdi:check"></ha-icon>Saved!`;
+                setTimeout(() => {
+                  lbDlBtn.innerHTML = origHtml;
+                }, 1800);
+                return;
+              } catch (shareErr) {
+                if (shareErr?.name === "AbortError") return;
+              }
+            }
+          }
+
+          const dlUrl = URL.createObjectURL(jpgBlob);
+          const a = document.createElement("a");
+          a.href = dlUrl;
+          a.download = fname;
+          a.style.display = "none";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(() => URL.revokeObjectURL(dlUrl), 10000);
+          lbDlBtn.innerHTML = `<ha-icon icon="mdi:check"></ha-icon>Saved!`;
+          setTimeout(() => {
+            lbDlBtn.innerHTML = origHtml;
+          }, 1800);
+        } catch (_) {
+          // Last-resort fallback: open image in new tab so user can long-press save
+          window.open(img.src, "_blank", "noopener");
+        }
+      });
       sr.getElementById("snapshot-img").addEventListener("click", () => {
         const img = sr.getElementById("snapshot-img");
         if (img.src && !img.hidden) {
-          this.#openLightbox(img.src, "Live AI Camera Snapshot", "bambu-live-snapshot.jpg");
+          let frozenSrc = img.src;
+          try {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.naturalWidth || 960;
+            canvas.height = img.naturalHeight || 540;
+            canvas.getContext("2d").drawImage(img, 0, 0);
+            frozenSrc = canvas.toDataURL("image/jpeg", 0.94);
+          } catch (_) {}
+          this.#openLightbox(frozenSrc, "Live AI Camera Snapshot", "bambu-live-snapshot.jpg");
         }
       });
       bindNum("ctrl-l1", "l1");
@@ -1626,6 +1806,12 @@ class BambuAIGuardPanel extends HTMLElement {
       bindNum("ctrl-thresh", "thresh");
       bindNum("ctrl-keep", "keep");
     }
+    this.#clockTimer = setInterval(() => {
+      if (document.visibilityState === "visible" && this.#lastCheckIso) {
+        const el = this.shadowRoot?.getElementById("last-check-time");
+        if (el) el.textContent = this.#formatRelativeTime(this.#lastCheckIso);
+      }
+    }, 15000);
     this.#render();
   }
 
@@ -1633,6 +1819,10 @@ class BambuAIGuardPanel extends HTMLElement {
     if (this.#pollTimer) {
       clearInterval(this.#pollTimer);
       this.#pollTimer = null;
+    }
+    if (this.#clockTimer) {
+      clearInterval(this.#clockTimer);
+      this.#clockTimer = null;
     }
     this.#stopLiveTimer();
     if (this.#liveBlobUrl) {
@@ -1761,6 +1951,11 @@ class BambuAIGuardPanel extends HTMLElement {
     if (!listEl || !chartWrap || !svg) return;
 
     const checks = Array.isArray(this.#recentInspections) ? this.#recentInspections : [];
+    if (!this.#lastCheckIso && checks[0]?.timestamp) {
+      this.#lastCheckIso = checks[0].timestamp;
+      const lastTimeEl = sr.getElementById("last-check-time");
+      if (lastTimeEl) lastTimeEl.textContent = this.#formatRelativeTime(this.#lastCheckIso);
+    }
     if (countBadge) {
       countBadge.textContent = `${checks.length} check${checks.length === 1 ? "" : "s"}`;
     }
@@ -1867,11 +2062,10 @@ class BambuAIGuardPanel extends HTMLElement {
     const lightbox = sr.getElementById("lightbox-dialog");
     const lbImg = sr.getElementById("lightbox-img");
     const lbTitle = sr.getElementById("lightbox-title");
-    const lbDl = sr.getElementById("btn-lb-download");
+    this.#lightboxFilename = filename;
+    this.#lightboxCaption = caption;
     lbImg.src = src;
     lbTitle.textContent = caption;
-    lbDl.href = src;
-    lbDl.download = filename;
     lightbox.showModal();
   }
 
@@ -2375,8 +2569,13 @@ class BambuAIGuardPanel extends HTMLElement {
 
       const lastTimeEl = sr.getElementById("last-check-time");
       const lastMetaEl = sr.getElementById("last-check-meta");
+      const effectiveLastTs =
+        a.last_check_timestamp ||
+        a.last_updated ||
+        (this.#recentInspections[0]?.timestamp ?? null);
+      this.#lastCheckIso = effectiveLastTs;
       if (lastTimeEl) {
-        lastTimeEl.textContent = this.#formatRelativeTime(a.last_updated);
+        lastTimeEl.textContent = this.#formatRelativeTime(effectiveLastTs);
       }
       if (lastMetaEl) {
         const parts = [];

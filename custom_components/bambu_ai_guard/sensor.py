@@ -17,9 +17,83 @@ from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import DOMAIN, STATUS_IDLE
 from .coordinator import BambuAIGuardCoordinator
 from .vision import InspectionVerdict
+
+
+def _build_ai_status_attrs(
+    c: BambuAIGuardCoordinator, v: InspectionVerdict
+) -> dict[str, Any]:
+    """Build attributes for the primary AI Guard status sensor, preserving last check across restarts."""
+    last_hist = c.history.recent_inspections[-1] if c.history.recent_inspections else None
+    has_live_verdict = v.status != STATUS_IDLE
+    last_check_ts = (
+        v.last_updated
+        if has_live_verdict
+        else (last_hist.get("timestamp") if last_hist else None)
+    )
+    last_check_layer = (
+        v.layer
+        if has_live_verdict and v.layer is not None
+        else (last_hist.get("layer") if last_hist else None)
+    )
+    last_check_total = (
+        v.total_layers
+        if has_live_verdict and v.total_layers
+        else (last_hist.get("total_layers") if last_hist else None)
+    )
+    last_check_trigger = (
+        v.trigger_reason
+        if has_live_verdict
+        else (last_hist.get("trigger") if last_hist else None)
+    )
+    last_check_latency = (
+        v.latency_ms
+        or c.last_api_latency_ms
+        or (last_hist.get("latency_ms") if last_hist else None)
+    )
+    return {
+        "printer_model": c.printer_model,
+        "kinematics": c.kinematics,
+        "failure_type": v.failure_type,
+        "recommended_action": v.recommended_action,
+        "details": v.details,
+        "confidence_pct": round(v.confidence * 100.0, 1)
+        if v.confidence is not None
+        else None,
+        "spaghetti_pct": round(v.spaghetti_prob * 100.0, 1)
+        if v.spaghetti_prob is not None
+        else (last_hist.get("spaghetti_pct") if last_hist else None),
+        "warping_pct": round(v.warping_prob * 100.0, 1)
+        if v.warping_prob is not None
+        else (last_hist.get("warping_pct") if last_hist else None),
+        "detachment_pct": round(v.detachment_prob * 100.0, 1)
+        if v.detachment_prob is not None
+        else (last_hist.get("detachment_pct") if last_hist else None),
+        "first_layer_defect_pct": round(v.first_layer_prob * 100.0, 1)
+        if v.first_layer_prob is not None
+        else (last_hist.get("first_layer_pct") if last_hist else None),
+        "severity": v.severity,
+        "provider": v.provider,
+        "model": v.model,
+        "latency_ms": last_check_latency,
+        "layer": last_check_layer,
+        "total_layers": last_check_total,
+        "current_layer": c.get_current_layer(),
+        "current_total_layers": c.get_total_layers(),
+        "is_printing": c.is_printer_running(),
+        "print_name": c.get_subtask_name(),
+        "trigger_reason": last_check_trigger,
+        "frames_merged": v.frames_merged,
+        "total_inspections": c.total_inspections,
+        "calls_today": c.calls_today,
+        "rate_limited": c.rate_limited,
+        "failures_detected": c.failures_detected,
+        "warnings": v.warnings,
+        "last_updated": last_check_ts,
+        "last_check_timestamp": last_check_ts,
+    }
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -38,46 +112,7 @@ SENSORS: tuple[BambuAIGuardSensorDescription, ...] = (
         translation_key="ai_status",
         icon="mdi:shield-Search",
         value_fn=lambda _c, v: v.status,
-        attr_fn=lambda c, v: {
-            "printer_model": c.printer_model,
-            "kinematics": c.kinematics,
-            "failure_type": v.failure_type,
-            "recommended_action": v.recommended_action,
-            "details": v.details,
-            "confidence_pct": round(v.confidence * 100.0, 1)
-            if v.confidence is not None
-            else None,
-            "spaghetti_pct": round(v.spaghetti_prob * 100.0, 1)
-            if v.spaghetti_prob is not None
-            else None,
-            "warping_pct": round(v.warping_prob * 100.0, 1)
-            if v.warping_prob is not None
-            else None,
-            "detachment_pct": round(v.detachment_prob * 100.0, 1)
-            if v.detachment_prob is not None
-            else None,
-            "first_layer_defect_pct": round(v.first_layer_prob * 100.0, 1)
-            if v.first_layer_prob is not None
-            else None,
-            "severity": v.severity,
-            "provider": v.provider,
-            "model": v.model,
-            "latency_ms": v.latency_ms or c.last_api_latency_ms,
-            "layer": v.layer,
-            "total_layers": v.total_layers,
-            "current_layer": c.get_current_layer(),
-            "current_total_layers": c.get_total_layers(),
-            "is_printing": c.is_printer_running(),
-            "print_name": c.get_subtask_name(),
-            "trigger_reason": v.trigger_reason,
-            "frames_merged": v.frames_merged,
-            "total_inspections": c.total_inspections,
-            "calls_today": c.calls_today,
-            "rate_limited": c.rate_limited,
-            "failures_detected": c.failures_detected,
-            "warnings": v.warnings,
-            "last_updated": v.last_updated,
-        },
+        attr_fn=_build_ai_status_attrs,
     ),
     BambuAIGuardSensorDescription(
         key="ai_confidence",

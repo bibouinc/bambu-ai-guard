@@ -306,6 +306,9 @@ class BambuAIGuardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema(schema_fields),
+            description_placeholders={
+                "api_key_url": "https://aistudio.google.com/apikey"
+            },
             errors=errors,
         )
 

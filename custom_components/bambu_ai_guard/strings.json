@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Bambu AI Guard Setup",
-        "description": "Get your free Gemini API key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) (click 'Create API Key').\n\nIf connecting directly over LAN, find your **IP & 8-char Access Code** on your printer screen:\n• **P1P / P1S**: Settings → WLAN\n• **A1 / A1 Mini**: Settings → LAN Only Mode (or WLAN)\n• **X1C / X1E**: Settings → Network",
+        "description": "Get your free Gemini API key at {api_key_url} (click 'Create API Key').\n\nIf connecting directly over LAN, find your **IP & 8-char Access Code** on your printer screen:\n• **P1P / P1S**: Settings → WLAN\n• **A1 / A1 Mini**: Settings → LAN Only Mode (or WLAN)\n• **X1C / X1E**: Settings → Network",
         "data": {
           "printer_device_id": "Bambu Lab Printer",
           "printer_model": "Printer Model",

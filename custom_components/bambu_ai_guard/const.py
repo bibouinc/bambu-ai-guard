@@ -46,6 +46,12 @@ CONF_CHECK_INTERVAL_LAYERS = "check_interval_layers"
 CONF_CHECK_INTERVAL_MINUTES = "check_interval_minutes"
 CONF_FIRST_LAYER_CHECKS = "first_layer_checks"
 CONF_USE_MEDIAN_FILTER = "use_median_filter"
+CONF_NOTIFY_TARGET = "notify_target"
+
+# Notification defaults
+NOTIFY_TARGET_NONE = "none"
+NOTIFY_TARGET_ALL = "notify.notify"
+DEFAULT_NOTIFY_TARGET = NOTIFY_TARGET_ALL
 
 # Schedule modes
 CHECK_MODE_LAYERS = "layers"

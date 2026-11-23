@@ -120,6 +120,9 @@
           "minutes": "Toutes les X minutes",
           "both": "Les deux (Couches & Minutes)"
         }
+      },
+      "notify_target": {
+        "name": "AI Push Notifications Target"
       }
     },
     "button": {

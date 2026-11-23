@@ -326,6 +326,21 @@ PANEL_SHEET.replaceSync(`
     font-variant-numeric: tabular-nums;
   }
 
+  .section-label {
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--z-ink-2);
+    margin: 4px 0 -4px 2px;
+  }
+
+  .section-divider {
+    border: 0;
+    border-top: 1px solid var(--z-border-soft);
+    margin: 6px 0 2px;
+  }
+
   .slider-hint {
     font-size: 0.74rem;
     font-weight: 400;
@@ -510,7 +525,9 @@ PANEL_TEMPLATE.innerHTML = `
     </div>
 
     <div class="panel-card">
-      <h2 class="card-title"><span>Guard Controls &amp; Frequency</span></h2>
+      <h2 class="card-title"><span>Guard Settings</span></h2>
+
+      <div class="section-label">Safety &amp; Alerts</div>
 
       <div class="control-row">
         <div>
@@ -519,6 +536,29 @@ PANEL_TEMPLATE.innerHTML = `
         </div>
         <input type="checkbox" id="ctrl-autopause" />
       </div>
+
+      <div class="slider-row">
+        <div class="slider-head">
+          <label for="ctrl-thresh">Auto-Pause Confidence</label>
+          <span class="slider-badge" id="val-ctrl-thresh">80%</span>
+        </div>
+        <div class="slider-hint">80% recommended. Lower pauses earlier; higher pauses only on obvious failures.</div>
+        <input type="range" id="ctrl-thresh" min="50" max="95" step="5" value="80" />
+      </div>
+
+      <div class="control-row">
+        <div>
+          <label for="ctrl-notify">Phone Push Notifications</label>
+          <div class="slider-hint">Sends an instant alert with the snapshot photo to your phone on defects.</div>
+        </div>
+        <select id="ctrl-notify">
+          <option value="none">Off (Dashboard Only)</option>
+          <option value="notify.notify">All Mobile Apps</option>
+        </select>
+      </div>
+
+      <hr class="section-divider" />
+      <div class="section-label">Inspection Schedule</div>
 
       <div class="control-row">
         <label for="ctrl-mode">When to Check Your Print</label>
@@ -554,15 +594,6 @@ PANEL_TEMPLATE.innerHTML = `
         </div>
         <div class="slider-hint">Inspects if this many minutes pass during a slow, large layer.</div>
         <input type="range" id="ctrl-mins" min="1" max="60" step="1" value="5" />
-      </div>
-
-      <div class="slider-row">
-        <div class="slider-head">
-          <label for="ctrl-thresh">Auto-Pause Confidence</label>
-          <span class="slider-badge" id="val-ctrl-thresh">80%</span>
-        </div>
-        <div class="slider-hint">80% recommended. Lower pauses earlier; higher pauses only on obvious failures.</div>
-        <input type="range" id="ctrl-thresh" min="50" max="95" step="5" value="80" />
       </div>
     </div>
 
@@ -650,6 +681,14 @@ class BambuAIGuardPanel extends HTMLElement {
       });
       sr.getElementById("ctrl-autopause").addEventListener("change", (e) => {
         this.#toggleSwitch(this.#entityMap.autoPause, e.target.checked);
+      });
+      sr.getElementById("ctrl-notify").addEventListener("change", (e) => {
+        if (this.#hass && this.#entityMap.notify) {
+          this.#hass.callService("select", "select_option", {
+            entity_id: this.#entityMap.notify,
+            option: e.target.value,
+          });
+        }
       });
       sr.getElementById("ctrl-mode").addEventListener("change", (e) => {
         const modeVal = e.target.value;
@@ -742,6 +781,7 @@ class BambuAIGuardPanel extends HTMLElement {
       camera: this.#find("camera", ["ai_guard_composite_snapshot", "snapshot_composite_ai_guard"]),
       history: this.#find("sensor", ["ai_print_history", "historique_des_impressions_ia"]),
       autoPause: this.#find("switch", ["ai_auto_pause", "pause_auto_ia"]),
+      notify: this.#find("select", ["notify_target", "push_notifications", "notifications_push"]),
       median: this.#find("switch", ["nozzle_erasing_filter", "anti_buse", "median_filter"]),
       mode: this.#find("select", ["check_schedule_mode", "frequence_d_inspection"]),
       l1: this.#find("number", ["first_layer_checks", "premiere_couche"]),
@@ -799,6 +839,30 @@ class BambuAIGuardPanel extends HTMLElement {
       }
     };
     syncCheck("ctrl-autopause", "autoPause");
+    const notifySel = sr.getElementById("ctrl-notify");
+    const notifyState = this.#entityMap.notify ? this.#hass.states[this.#entityMap.notify] : null;
+    if (notifyState && Array.isArray(notifyState.attributes?.options)) {
+      const opts = notifyState.attributes.options;
+      const curKeys = Array.from(notifySel.options).map((o) => o.value).join(",");
+      if (curKeys !== opts.join(",")) {
+        notifySel.replaceChildren(
+          ...opts.map((opt) => {
+            const o = document.createElement("option");
+            o.value = opt;
+            o.textContent =
+              opt === "none"
+                ? "Off (Dashboard Only)"
+                : opt === "notify.notify"
+                ? "All Mobile Apps"
+                : opt.replace(/^notify\./, "").replace(/^mobile_app_/, "Phone: ");
+            return o;
+          })
+        );
+      }
+      if (document.activeElement !== notifySel && sr.activeElement !== notifySel) {
+        notifySel.value = notifyState.state;
+      }
+    }
     syncVal("ctrl-mode", "mode", false);
     const activeMode = sr.getElementById("ctrl-mode").value;
     sr.getElementById("row-ctrl-layers").hidden = activeMode === "minutes";

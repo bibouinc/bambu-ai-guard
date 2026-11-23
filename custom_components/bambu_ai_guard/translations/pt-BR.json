@@ -120,6 +120,9 @@
           "minutes": "Every X Minutes",
           "both": "Both (Layers & Minutes)"
         }
+      },
+      "notify_target": {
+        "name": "AI Push Notifications Target"
       }
     },
     "button": {

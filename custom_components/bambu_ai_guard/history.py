@@ -63,7 +63,7 @@ class PrintHistoryStore:
         verdict: InspectionVerdict,
         jpeg_bytes: bytes | None,
         auto_paused: bool = False,
-    ) -> None:
+    ) -> str | None:
         """Record a checkpoint inspection and update the active print record in lifetime history."""
         async with self._lock:
             now_iso = datetime.now(timezone.utc).isoformat()
@@ -177,6 +177,7 @@ class PrintHistoryStore:
                 self.recent_inspections = self.recent_inspections[-200:]
 
             await self._async_save()
+            return snapshot_url
 
     async def async_finish_active_print(self, final_state: str) -> None:
         """Mark the currently tracked print job as completed/idle."""

@@ -37,6 +37,7 @@ from .const import (
     CONF_GEMINI_API_KEY,
     CONF_KINEMATICS,
     CONF_LAYER_ENTITY,
+    CONF_NOTIFY_TARGET,
     CONF_PAUSE_ENTITY,
     CONF_PRINTER_DEVICE_ID,
     CONF_PRINTER_IP,
@@ -54,9 +55,11 @@ from .const import (
     DEFAULT_CHECK_INTERVAL_MINUTES,
     DEFAULT_CHECK_MODE,
     DEFAULT_FIRST_LAYER_CHECKS,
+    DEFAULT_NOTIFY_TARGET,
     DOMAIN,
     KINEMATICS_COREXY,
     LOGGER,
+    NOTIFY_TARGET_NONE,
     STATUS_ERROR,
     STATUS_FAILURE,
     STATUS_IDLE,
@@ -184,6 +187,9 @@ class BambuAIGuardCoordinator(DataUpdateCoordinator[InspectionVerdict]):
         default_median = self.kinematics == KINEMATICS_COREXY
         self.use_median_filter: bool = bool(
             merged_cfg.get(CONF_USE_MEDIAN_FILTER, default_median)
+        )
+        self.notify_target: str = str(
+            merged_cfg.get(CONF_NOTIFY_TARGET, DEFAULT_NOTIFY_TARGET)
         )
 
         session = async_get_clientsession(hass)
@@ -640,18 +646,21 @@ class BambuAIGuardCoordinator(DataUpdateCoordinator[InspectionVerdict]):
 
             self.total_inspections += 1
             auto_paused = False
-            if verdict.status == STATUS_FAILURE:
-                self.failures_detected += 1
-                auto_paused = await self._async_handle_failure_verdict(verdict)
-            elif verdict.status == "WARNING":
-                await self._async_send_warning_notification(verdict)
-
-            await self.history.async_record_inspection(
+            snapshot_url = await self.history.async_record_inspection(
                 print_name=self.get_print_name(),
                 verdict=verdict,
                 jpeg_bytes=jpeg_bytes,
-                auto_paused=auto_paused,
+                auto_paused=False,
             )
+            if verdict.status == STATUS_FAILURE:
+                self.failures_detected += 1
+                auto_paused = await self._async_handle_failure_verdict(
+                    verdict, snapshot_url=snapshot_url
+                )
+            elif verdict.status == "WARNING":
+                await self._async_send_warning_notification(
+                    verdict, snapshot_url=snapshot_url
+                )
 
             self.hass.bus.async_fire(
                 f"{DOMAIN}_event",
@@ -689,14 +698,60 @@ class BambuAIGuardCoordinator(DataUpdateCoordinator[InspectionVerdict]):
             self.async_set_updated_data(verdict)
             return verdict
 
-    async def _async_send_warning_notification(self, verdict: InspectionVerdict) -> None:
-        """Create a persistent HA notification on warning-level defects."""
+    async def _async_send_push_notification(
+        self,
+        title: str,
+        message: str,
+        snapshot_url: str | None = None,
+        critical: bool = False,
+    ) -> None:
+        """Send a Home Assistant Mobile App / Notify push notification with optional snapshot photo."""
+        target = (self.notify_target or NOTIFY_TARGET_NONE).strip()
+        if not target or target == NOTIFY_TARGET_NONE:
+            return
+
+        service_name = target.removeprefix("notify.")
+        if not self.hass.services.has_service("notify", service_name):
+            LOGGER.debug("Notify service notify.%s not found; skipping push", service_name)
+            return
+
+        data_payload: dict[str, Any] = {
+            "url": f"/{DOMAIN}",
+            "clickAction": f"/{DOMAIN}",
+            "tag": f"{DOMAIN}_{self.printer_serial}",
+        }
+        if snapshot_url:
+            data_payload["image"] = snapshot_url
+        if critical:
+            data_payload["push"] = {"interruption-level": "time-sensitive"}
+            data_payload["importance"] = "high"
+
+        try:
+            await self.hass.services.async_call(
+                "notify",
+                service_name,
+                {
+                    "title": title,
+                    "message": message,
+                    "data": data_payload,
+                },
+                blocking=False,
+            )
+        except Exception as err:  # noqa: BLE001
+            LOGGER.warning("Failed sending push notification to notify.%s: %s", service_name, err)
+
+    async def _async_send_warning_notification(
+        self, verdict: InspectionVerdict, snapshot_url: str | None = None
+    ) -> None:
+        """Create a persistent HA notification and optional phone push on warning-level defects."""
         conf_pct = (verdict.confidence or 0.0) * 100.0
+        title = f"⚠️ Bambu AI Guard Warning: {verdict.failure_type.upper()} on {self.printer_name}"
+        short_msg = f"Layer {verdict.layer}/{verdict.total_layers} ({conf_pct:.0f}%): {verdict.details}"
         await self.hass.services.async_call(
             "persistent_notification",
             "create",
             {
-                "title": f"⚠️ Bambu AI Guard Warning: {verdict.failure_type.upper()} on {self.printer_name}",
+                "title": title,
                 "message": (
                     f"**Defect**: `{verdict.failure_type}` ({conf_pct:.0f}% confidence)\n"
                     f"**Layer**: {verdict.layer}/{verdict.total_layers}\n"
@@ -707,8 +762,13 @@ class BambuAIGuardCoordinator(DataUpdateCoordinator[InspectionVerdict]):
             },
             blocking=False,
         )
+        await self._async_send_push_notification(
+            title=title, message=short_msg, snapshot_url=snapshot_url, critical=False
+        )
 
-    async def _async_handle_failure_verdict(self, verdict: InspectionVerdict) -> bool:
+    async def _async_handle_failure_verdict(
+        self, verdict: InspectionVerdict, snapshot_url: str | None = None
+    ) -> bool:
         """Trigger auto-pause and persistent HA notification when spaghetti/warping/detachment is detected."""
         conf_pct = (verdict.confidence or 0.0) * 100.0
         paused = False
@@ -757,11 +817,12 @@ class BambuAIGuardCoordinator(DataUpdateCoordinator[InspectionVerdict]):
             if paused
             else "Manual inspection recommended."
         )
+        title = f"🚨 Bambu AI Guard: {verdict.failure_type.upper()} on {self.printer_name}"
         await self.hass.services.async_call(
             "persistent_notification",
             "create",
             {
-                "title": f"🚨 Bambu AI Guard: {verdict.failure_type.upper()} on {self.printer_name}",
+                "title": title,
                 "message": (
                     f"**Defect**: `{verdict.failure_type}` ({conf_pct:.0f}% confidence)\n"
                     f"**Layer**: {verdict.layer}/{verdict.total_layers}\n"
@@ -771,6 +832,12 @@ class BambuAIGuardCoordinator(DataUpdateCoordinator[InspectionVerdict]):
                 "notification_id": f"{DOMAIN}_alert_{self.printer_serial}",
             },
             blocking=False,
+        )
+        await self._async_send_push_notification(
+            title=title,
+            message=f"Layer {verdict.layer}/{verdict.total_layers} ({conf_pct:.0f}%) — {action_msg} {verdict.details}",
+            snapshot_url=snapshot_url,
+            critical=True,
         )
         return paused
 

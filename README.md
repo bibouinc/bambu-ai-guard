@@ -35,23 +35,16 @@ Only the flagship X1C ships with built-in AI spaghetti detection, and even then,
 
 ```mermaid
 flowchart LR
-    P["Bambu Lab Printer (P1P / P1S / A1 / A1 Mini / X1C)"]
-    T["Smart Triggers (Layer 1 Multi-Check + Every X Layers / Y Min)"]
-    C{"Printer Kinematics"}
-    M["3-Frame Median Filter (Erases Toolhead on CoreXY)"]
-    S["Crisp Single Frame (Zero Blur on A1 Bed-Slinger)"]
-    AI["Google Gemini Decisions API (Spaghetti, Warping, Detachment, Layer 1)"]
-    OK["OK: Update Sidebar Panel & Lifetime Print History"]
-    FAIL["FAILURE: Auto-Pause Printer + HA Alert + Save Photo"]
+    P["1. Your 3D Printer starts printing"]
+    T["2. Wake up at tricky moments (Layer 1, then every few layers or minutes)"]
+    C["3. Snap a clear photo (erasing the moving printhead out of the way)"]
+    AI["4. Ask Google AI: Clean print, or plastic spaghetti / peeling corners?"]
+    OK["Looks great! Keep printing & log it"]
+    FAIL["Uh-oh! Hit PAUSE right away & send an alert"]
 
-    P -->|"LAN Telemetry / ha-bambulab"| T
-    T --> C
-    C -->|"CoreXY"| M
-    C -->|"Bed-Slinger"| S
-    M --> AI
-    S --> AI
-    AI -->|"Healthy"| OK
-    AI -->|"Defect Detected"| FAIL
+    P --> T --> C --> AI
+    AI -->|"All Good"| OK
+    AI -->|"Problem Found"| FAIL
 ```
 
 ### 1. Works 100% Standalone Over Wi-Fi (30-Second Setup)

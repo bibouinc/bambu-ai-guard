@@ -521,14 +521,6 @@ PANEL_TEMPLATE.innerHTML = `
       </div>
 
       <div class="control-row">
-        <div>
-          <label for="ctrl-median">Hide Printhead in Photos</label>
-          <div class="slider-hint">Blends 3 quick photos to erase the moving toolhead (ON for P1P/P1S/X1C; OFF for A1/A1 Mini).</div>
-        </div>
-        <input type="checkbox" id="ctrl-median" />
-      </div>
-
-      <div class="control-row">
         <label for="ctrl-mode">When to Check Your Print</label>
         <select id="ctrl-mode">
           <option value="both">Layers or Time (Recommended)</option>
@@ -658,9 +650,6 @@ class BambuAIGuardPanel extends HTMLElement {
       });
       sr.getElementById("ctrl-autopause").addEventListener("change", (e) => {
         this.#toggleSwitch(this.#entityMap.autoPause, e.target.checked);
-      });
-      sr.getElementById("ctrl-median").addEventListener("change", (e) => {
-        this.#toggleSwitch(this.#entityMap.median, e.target.checked);
       });
       sr.getElementById("ctrl-mode").addEventListener("change", (e) => {
         const modeVal = e.target.value;
@@ -810,7 +799,6 @@ class BambuAIGuardPanel extends HTMLElement {
       }
     };
     syncCheck("ctrl-autopause", "autoPause");
-    syncCheck("ctrl-median", "median");
     syncVal("ctrl-mode", "mode", false);
     const activeMode = sr.getElementById("ctrl-mode").value;
     sr.getElementById("row-ctrl-layers").hidden = activeMode === "minutes";

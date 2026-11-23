@@ -40,10 +40,10 @@ class BambuAIGuardCompositeCamera(
     async def async_camera_image(
         self, width: int | None = None, height: int | None = None
     ) -> bytes | None:
-        """Return bytes of the latest composite camera image."""
+        """Return bytes of the latest composite camera image (or fast single-frame live preview)."""
         if self.coordinator.latest_composite_jpeg:
             return self.coordinator.latest_composite_jpeg
-        frame, _ = await self.coordinator.async_capture_inspection_frame()
+        frame = await self.coordinator._async_capture_single_frame()
         if frame:
             self.coordinator.latest_composite_jpeg = frame
         return frame

@@ -551,6 +551,17 @@ class BambuAIGuardPanel extends HTMLElement {
       sr.getElementById("btn-menu").addEventListener("click", () => {
         this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: true, composed: true }));
       });
+      const imgEl = sr.getElementById("snapshot-img");
+      const emptyEl = sr.getElementById("snapshot-empty");
+      imgEl.addEventListener("load", () => {
+        imgEl.hidden = false;
+        emptyEl.hidden = true;
+      });
+      imgEl.addEventListener("error", () => {
+        imgEl.hidden = true;
+        emptyEl.hidden = false;
+        emptyEl.textContent = "Printer camera offline or standby — turn on printer or click \"Inspect Now (AI)\" to capture a frame.";
+      });
       sr.getElementById("btn-inspect").addEventListener("click", () => {
         if (this.#hass) this.#hass.callService("bambu_ai_guard", "inspect_now", {});
       });
@@ -675,11 +686,10 @@ class BambuAIGuardPanel extends HTMLElement {
     const camObj = this.#entityMap.camera ? this.#hass.states[this.#entityMap.camera] : null;
     if (camObj && camObj.attributes && camObj.attributes.entity_picture) {
       const img = sr.getElementById("snapshot-img");
-      const empty = sr.getElementById("snapshot-empty");
       const url = camObj.attributes.entity_picture;
-      if (img.getAttribute("src") !== url) img.setAttribute("src", url);
-      img.hidden = false;
-      empty.hidden = true;
+      if (img.getAttribute("src") !== url) {
+        img.setAttribute("src", url);
+      }
     }
 
     const syncCheck = (elId, key) => {

@@ -144,7 +144,8 @@ async def capture_direct_bambu_camera_frame(
     pass_bytes = access_code.encode("utf-8").ljust(32, b"\x00")[:32]
     auth_packet = header + user_bytes + pass_bytes
 
-    ssl_ctx = ssl.create_default_context()
+    # Non-blocking TLS context (avoids blocking load_default_certs in HA event loop)
+    ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
     ssl_ctx.check_hostname = False
     ssl_ctx.verify_mode = ssl.CERT_NONE
 

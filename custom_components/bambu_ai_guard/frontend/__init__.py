@@ -14,7 +14,7 @@ from ..const import DOMAIN, LOGGER
 URL_BASE = "/bambu_ai_guard_frontend"
 CARD_FILENAME = "bambu-ai-guard-card.js"
 PANEL_FILENAME = "bambu-ai-guard-panel.js"
-CARD_VERSION = "1.3.0"
+CARD_VERSION = "1.3.1"
 
 
 class BambuAIGuardCardRegistration:

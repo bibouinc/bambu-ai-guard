@@ -393,7 +393,6 @@ CARD_TEMPLATE.innerHTML = `
         </div>
         <div class="title-wrap">
           <h3 id="printer-title">Bambu AI Guard</h3>
-          <div class="subtitle" id="printer-subtitle">Gemini Decisions API · Layer Guard</div>
         </div>
       </div>
       <div class="status-pill" id="status-pill" data-status="IDLE">IDLE</div>
@@ -562,11 +561,8 @@ class BambuAIGuardCard extends HTMLElement {
       pill.setAttribute("data-status", st);
 
       const model = attrs.printer_model || "Bambu Lab";
-      const kin = (attrs.kinematics || "corexy").toUpperCase();
       this.shadowRoot.getElementById("printer-title").textContent =
         this.#config.title || `Bambu AI Guard · ${model}`;
-      this.shadowRoot.getElementById("printer-subtitle").textContent =
-        `${kin} · ${attrs.total_inspections ?? 0} checks · ${attrs.failures_detected ?? 0} alerts`;
 
       const layer = attrs.layer ?? "—";
       const totalLayers = attrs.total_layers ?? "—";

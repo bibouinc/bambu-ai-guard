@@ -470,7 +470,6 @@ PANEL_TEMPLATE.innerHTML = `
       </div>
       <div>
         <h1 id="panel-title">Bambu AI Guard</h1>
-        <div class="sub" id="panel-sub">Spaghetti, Warping &amp; Detachment Protection · Gemini Decisions API</div>
       </div>
     </div>
     <div class="status-pill" id="status-pill" data-status="IDLE">IDLE</div>
@@ -733,7 +732,6 @@ class BambuAIGuardPanel extends HTMLElement {
       pill.textContent = st;
       pill.setAttribute("data-status", st);
       sr.getElementById("panel-title").textContent = `Bambu AI Guard · ${a.printer_model || "Printer"}`;
-      sr.getElementById("panel-sub").textContent = `${(a.kinematics || "corexy").toUpperCase()} · ${a.total_inspections ?? 0} checks · ${a.failures_detected ?? 0} alerts`;
       sr.getElementById("layer-chip").textContent = `Layer ${a.layer ?? "—"} / ${a.total_layers ?? "—"}`;
       sr.getElementById("latency-chip").textContent = a.latency_ms ? `${a.latency_ms} ms` : "gemini-decision-1";
       sr.getElementById("details-text").textContent = a.details || "Ready.";

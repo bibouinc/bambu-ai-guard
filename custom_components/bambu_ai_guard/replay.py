@@ -73,7 +73,7 @@ def _list_local_timelapses_sync() -> list[dict[str, Any]]:
                 seen_paths.add(real)
                 try:
                     stat = f.stat()
-                    if stat.st_size < 10_000:
+                    if stat.st_size < 100_000:
                         continue
                     label = names_map.get(f.name) or f.stem
                     candidates.append(
@@ -153,26 +153,14 @@ def _download_ftps_timelapse_sync(
 
 
 def extract_last_frame_thumb_sync(video_id: str) -> bytes | None:
-    """Return cached or freshly extracted last-frame JPEG thumbnail for a local /media timelapse."""
+    """Extract the real last-frame JPEG thumbnail directly from a local /media timelapse."""
     if not video_id.startswith("local:"):
         return None
     video_path = Path(video_id.removeprefix("local:")).resolve()
     if not str(video_path).startswith("/media/") or not video_path.exists():
         return None
 
-    # Check pre-generated thumbnail in .thumbs/ if present
-    thumbs_dir = video_path.parent / ".thumbs"
-    for cand in (
-        thumbs_dir / f"{video_path.name}.jpg",
-        thumbs_dir / f"{video_path.stem}.jpg",
-    ):
-        if cand.exists() and cand.stat().st_size > 1000:
-            try:
-                return cand.read_bytes()
-            except OSError:
-                pass
-
-    # Extract last frame quickly via sseof -0.5 with ffmpeg
+    # Extract actual last frame quickly via sseof -0.5 with ffmpeg
     with tempfile.TemporaryDirectory(prefix="bambu_thumb_") as tmpdir:
         out_jpg = Path(tmpdir) / "thumb.jpg"
         subprocess.run(

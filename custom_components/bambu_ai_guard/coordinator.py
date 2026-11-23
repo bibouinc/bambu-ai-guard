@@ -688,12 +688,15 @@ class BambuAIGuardCoordinator(DataUpdateCoordinator[InspectionVerdict]):
                 is_rate_limited=any("429" in w for w in verdict.warnings),
             )
             auto_paused = False
-            snapshot_url = await self.history.async_record_inspection(
-                print_name=self.get_print_name(),
-                verdict=verdict,
-                jpeg_bytes=jpeg_bytes,
-                auto_paused=False,
-            )
+            snapshot_url: str | None = None
+            # Only log to Lifetime Print History when a real print is actually running (layer >= 1)
+            if self.is_printer_running() and curr_layer >= 1:
+                snapshot_url = await self.history.async_record_inspection(
+                    print_name=self.get_print_name(),
+                    verdict=verdict,
+                    jpeg_bytes=jpeg_bytes,
+                    auto_paused=False,
+                )
             if verdict.status == STATUS_FAILURE:
                 self.failures_detected += 1
                 auto_paused = await self._async_handle_failure_verdict(

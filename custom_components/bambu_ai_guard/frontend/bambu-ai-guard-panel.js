@@ -725,6 +725,99 @@ PANEL_SHEET.replaceSync(`
     background: #141414;
     flex-shrink: 0;
     border: 1px solid var(--z-border-soft);
+    cursor: zoom-in;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+
+  .unified-thumb:hover {
+    border-color: var(--z-accent);
+    transform: scale(1.06);
+  }
+
+  .hover-preview {
+    position: fixed;
+    z-index: 9999;
+    pointer-events: none;
+    background: var(--z-surface);
+    border: 2px solid var(--z-accent);
+    border-radius: 12px;
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
+    padding: 6px;
+    width: 380px;
+    max-width: 85vw;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .hover-preview[hidden] {
+    display: none;
+  }
+
+  .hover-preview img {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: 8px;
+    display: block;
+    background: #111;
+  }
+
+  .hover-preview-cap {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--z-ink);
+    padding: 0 4px 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  dialog.lightbox-dialog {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    max-width: 92vw;
+    max-height: 90vh;
+    overflow: visible;
+  }
+
+  dialog.lightbox-dialog:modal {
+    overscroll-behavior: contain;
+  }
+
+  dialog.lightbox-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.78);
+    overflow: hidden;
+    overscroll-behavior: contain;
+  }
+
+  .lightbox-frame {
+    background: var(--z-surface);
+    border: 1px solid var(--z-border);
+    border-radius: 14px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .lightbox-frame img {
+    max-width: 86vw;
+    max-height: 76vh;
+    border-radius: 10px;
+    display: block;
+    object-fit: contain;
+  }
+
+  .lightbox-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: var(--z-ink);
   }
 
   .unified-info {
@@ -1127,6 +1220,23 @@ PANEL_TEMPLATE.innerHTML = `
     </div>
   </div>
 
+  <div class="hover-preview" id="hover-preview" hidden>
+    <img id="hover-preview-img" alt="Preview" />
+    <div class="hover-preview-cap" id="hover-preview-cap"></div>
+  </div>
+
+  <dialog class="lightbox-dialog" id="lightbox-dialog" closedby="any" aria-labelledby="lightbox-title">
+    <div class="lightbox-frame">
+      <img id="lightbox-img" alt="Full snapshot preview" />
+      <div class="lightbox-bar">
+        <span id="lightbox-title"></span>
+        <form method="dialog">
+          <button value="close" class="zest-btn secondary" autofocus>Close</button>
+        </form>
+      </div>
+    </div>
+  </dialog>
+
   <dialog class="purge-dialog" id="purge-dialog" closedby="any" aria-labelledby="purge-dialog-title">
     <h3 id="purge-dialog-title">Purge Print History</h3>
     <p>Choose how many recent prints to keep. All older print logs and snapshots will be permanently deleted.</p>
@@ -1291,6 +1401,54 @@ class BambuAIGuardPanel extends HTMLElement {
     this.#renderUnifiedHistory();
   }
 
+  #attachThumbPreview(imgEl, src, caption) {
+    const sr = this.shadowRoot;
+    const preview = sr.getElementById("hover-preview");
+    const prevImg = sr.getElementById("hover-preview-img");
+    const prevCap = sr.getElementById("hover-preview-cap");
+    const lightbox = sr.getElementById("lightbox-dialog");
+    const lbImg = sr.getElementById("lightbox-img");
+    const lbTitle = sr.getElementById("lightbox-title");
+
+    const positionPreview = (e) => {
+      const margin = 16;
+      const boxW = 392;
+      const boxH = 260;
+      let left = e.clientX + margin;
+      let top = e.clientY - boxH / 2;
+      if (left + boxW > window.innerWidth - 12) {
+        left = Math.max(12, e.clientX - boxW - margin);
+      }
+      if (top < 12) top = 12;
+      if (top + boxH > window.innerHeight - 12) {
+        top = Math.max(12, window.innerHeight - boxH - 12);
+      }
+      preview.style.left = `${left}px`;
+      preview.style.top = `${top}px`;
+    };
+
+    imgEl.addEventListener("pointerenter", (e) => {
+      if (e.pointerType === "touch") return;
+      prevImg.src = src;
+      prevCap.textContent = caption;
+      preview.hidden = false;
+      positionPreview(e);
+    });
+    imgEl.addEventListener("pointermove", (e) => {
+      if (!preview.hidden) positionPreview(e);
+    });
+    imgEl.addEventListener("pointerleave", () => {
+      preview.hidden = true;
+    });
+    imgEl.addEventListener("click", (e) => {
+      e.stopPropagation();
+      preview.hidden = true;
+      lbImg.src = src;
+      lbTitle.textContent = caption;
+      lightbox.showModal();
+    });
+  }
+
   #renderUnifiedHistory() {
     const sr = this.shadowRoot;
     if (!sr) return;
@@ -1322,6 +1480,7 @@ class BambuAIGuardPanel extends HTMLElement {
         img.loading = "lazy";
         img.src = p.snapshot_url;
         img.alt = p.print_name || "Print";
+        this.#attachThumbPreview(img, p.snapshot_url, p.print_name || "Print");
         left.append(img);
       }
 
@@ -1373,6 +1532,7 @@ class BambuAIGuardPanel extends HTMLElement {
         img.loading = "lazy";
         img.src = item.thumb_url;
         img.alt = item.label;
+        this.#attachThumbPreview(img, item.thumb_url, item.label);
         left.append(img);
       }
 

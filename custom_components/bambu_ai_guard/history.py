@@ -56,12 +56,49 @@ class PrintHistoryStore:
     async def async_record_simulation(
         self, video_id: str, progress: dict[str, Any]
     ) -> None:
-        """Persist a completed timelapse replay simulation verdict by video_id."""
+        """Persist a completed timelapse replay simulation verdict AND its sent checkpoint frames."""
+        import base64
+        import hashlib
+
         async with self._lock:
             results = progress.get("results") or []
             max_sp = max((float(r.get("spaghetti_pct") or 0.0) for r in results), default=0.0)
             max_wp = max((float(r.get("warping_pct") or 0.0) for r in results), default=0.0)
             max_dt = max((float(r.get("detachment_pct") or 0.0) for r in results), default=0.0)
+
+            vid_hash = hashlib.sha1(video_id.encode("utf-8")).hexdigest()[:10]
+            saved_frames: list[dict[str, Any]] = []
+            for r in results:
+                img_url: str | None = None
+                data_url = str(r.get("image_data_url") or "")
+                if data_url.startswith("data:image/jpeg;base64,"):
+                    try:
+                        raw_jpg = base64.b64decode(
+                            data_url.removeprefix("data:image/jpeg;base64,")
+                        )
+                        fname = f"sim_{vid_hash}_L{r.get('layer', 0)}.jpg"
+                        img_url = await self._hass.async_add_executor_job(
+                            self._save_snapshot_sync, fname, raw_jpg
+                        )
+                    except Exception as err:  # noqa: BLE001
+                        LOGGER.debug("Could not persist simulation frame: %s", err)
+
+                saved_frames.append(
+                    {
+                        "layer": r.get("layer"),
+                        "total_layers": r.get("total_layers"),
+                        "status": r.get("status"),
+                        "failure_type": r.get("failure_type"),
+                        "confidence_pct": r.get("confidence_pct"),
+                        "spaghetti_pct": r.get("spaghetti_pct"),
+                        "warping_pct": r.get("warping_pct"),
+                        "detachment_pct": r.get("detachment_pct"),
+                        "first_layer_pct": r.get("first_layer_pct"),
+                        "would_pause": r.get("would_pause"),
+                        "image_url": img_url,
+                    }
+                )
+
             self.simulations[video_id] = {
                 "video_name": progress.get("video_name"),
                 "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -73,6 +110,7 @@ class PrintHistoryStore:
                 "max_spaghetti_pct": round(max_sp, 1),
                 "max_warping_pct": round(max_wp, 1),
                 "max_detachment_pct": round(max_dt, 1),
+                "frames": saved_frames,
             }
             await self._async_save()
 

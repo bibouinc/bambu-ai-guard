@@ -1026,6 +1026,12 @@ PANEL_SHEET.replaceSync(`
     object-fit: cover;
     display: block;
     background: #111;
+    cursor: zoom-in;
+    transition: opacity 0.15s ease;
+  }
+
+  .replay-step img:hover {
+    opacity: 0.9;
   }
 
   .replay-step-meta {
@@ -1253,9 +1259,13 @@ PANEL_TEMPLATE.innerHTML = `
       <img id="lightbox-img" alt="Full snapshot preview" />
       <div class="lightbox-bar">
         <span id="lightbox-title"></span>
-        <form method="dialog">
-          <button value="close" class="zest-btn secondary" autofocus>Close</button>
-        </form>
+        <div class="actions-row">
+          <button type="button" class="zest-btn secondary" id="btn-lb-copy"><ha-icon icon="mdi:content-copy"></ha-icon>Copy</button>
+          <a class="zest-btn secondary" id="btn-lb-download" download="bambu-snapshot.jpg" style="text-decoration:none;"><ha-icon icon="mdi:download"></ha-icon>Download</a>
+          <form method="dialog" style="margin:0;">
+            <button value="close" class="zest-btn" autofocus>Close</button>
+          </form>
+        </div>
       </div>
     </div>
   </dialog>
@@ -1398,6 +1408,38 @@ class BambuAIGuardPanel extends HTMLElement {
       sr.getElementById("btn-refresh-timelapses").addEventListener("click", () => {
         this.#loadTimelapses();
       });
+      const lbCopyBtn = sr.getElementById("btn-lb-copy");
+      lbCopyBtn.addEventListener("click", async () => {
+        const img = sr.getElementById("lightbox-img");
+        if (!img?.src) return;
+        try {
+          // Convert to PNG blob via canvas for universal ClipboardItem browser support
+          const canvas = document.createElement("canvas");
+          canvas.width = img.naturalWidth || 960;
+          canvas.height = img.naturalHeight || 540;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0);
+          const pngBlob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+          if (pngBlob && navigator.clipboard && window.ClipboardItem) {
+            await navigator.clipboard.write([new ClipboardItem({ "image/png": pngBlob })]);
+            lbCopyBtn.innerHTML = `<ha-icon icon="mdi:check"></ha-icon>Copied!`;
+            setTimeout(() => {
+              lbCopyBtn.innerHTML = `<ha-icon icon="mdi:content-copy"></ha-icon>Copy`;
+            }, 1800);
+          }
+        } catch (_) {
+          lbCopyBtn.innerHTML = `<ha-icon icon="mdi:alert-circle-outline"></ha-icon>Copy blocked (HTTPS needed)`;
+          setTimeout(() => {
+            lbCopyBtn.innerHTML = `<ha-icon icon="mdi:content-copy"></ha-icon>Copy`;
+          }, 2200);
+        }
+      });
+      sr.getElementById("snapshot-img").addEventListener("click", () => {
+        const img = sr.getElementById("snapshot-img");
+        if (img.src && !img.hidden) {
+          this.#openLightbox(img.src, "Live AI Camera Snapshot", "bambu-live-snapshot.jpg");
+        }
+      });
       bindNum("ctrl-l1", "l1");
       bindNum("ctrl-layers", "layers");
       bindNum("ctrl-mins", "mins");
@@ -1425,14 +1467,24 @@ class BambuAIGuardPanel extends HTMLElement {
     this.#renderUnifiedHistory();
   }
 
+  #openLightbox(src, caption, filename = "bambu-snapshot.jpg") {
+    const sr = this.shadowRoot;
+    const lightbox = sr.getElementById("lightbox-dialog");
+    const lbImg = sr.getElementById("lightbox-img");
+    const lbTitle = sr.getElementById("lightbox-title");
+    const lbDl = sr.getElementById("btn-lb-download");
+    lbImg.src = src;
+    lbTitle.textContent = caption;
+    lbDl.href = src;
+    lbDl.download = filename;
+    lightbox.showModal();
+  }
+
   #attachThumbPreview(imgEl, src, caption) {
     const sr = this.shadowRoot;
     const preview = sr.getElementById("hover-preview");
     const prevImg = sr.getElementById("hover-preview-img");
     const prevCap = sr.getElementById("hover-preview-cap");
-    const lightbox = sr.getElementById("lightbox-dialog");
-    const lbImg = sr.getElementById("lightbox-img");
-    const lbTitle = sr.getElementById("lightbox-title");
 
     const positionPreview = (e) => {
       const margin = 16;
@@ -1467,9 +1519,8 @@ class BambuAIGuardPanel extends HTMLElement {
     imgEl.addEventListener("click", (e) => {
       e.stopPropagation();
       preview.hidden = true;
-      lbImg.src = src;
-      lbTitle.textContent = caption;
-      lightbox.showModal();
+      const safeName = `${String(caption).replace(/[^a-zA-Z0-9_-]+/g, "_").slice(0, 48)}.jpg`;
+      this.#openLightbox(src, caption, safeName);
     });
   }
 
@@ -1605,15 +1656,28 @@ class BambuAIGuardPanel extends HTMLElement {
       info.append(title, badges);
       left.append(info);
 
+      const rowActions = document.createElement("div");
+      rowActions.className = "actions-row";
+
+      if (sim && Array.isArray(sim.frames) && sim.frames.length > 0) {
+        const viewBtn = document.createElement("button");
+        viewBtn.type = "button";
+        viewBtn.className = "zest-btn secondary";
+        viewBtn.innerHTML = `<ha-icon icon="mdi:image-multiple-outline"></ha-icon>View Frames`;
+        viewBtn.addEventListener("click", () => this.#showSavedSimulation(item.id, sim, row));
+        rowActions.append(viewBtn);
+      }
+
       const simBtn = document.createElement("button");
       simBtn.type = "button";
       simBtn.className = "zest-btn secondary";
       simBtn.innerHTML = `<ha-icon icon="mdi:play-circle-outline"></ha-icon>${sim ? "Re-Simulate" : "Simulate"}`;
       simBtn.addEventListener("click", () => this.#startReplay(item.id, row));
+      rowActions.append(simBtn);
 
       const head = document.createElement("div");
       head.className = "unified-row-head";
-      head.append(left, simBtn);
+      head.append(left, rowActions);
       row.append(head);
       if (this.#activeReplayVideoId === item.id && drawer) {
         drawer.hidden = false;
@@ -1623,6 +1687,64 @@ class BambuAIGuardPanel extends HTMLElement {
     }
 
     container.replaceChildren(...rows);
+  }
+
+  #showSavedSimulation(videoId, sim, targetRow) {
+    const sr = this.shadowRoot;
+    const drawer = sr.getElementById("inline-replay-drawer");
+    const banner = sr.getElementById("replay-banner");
+    const grid = sr.getElementById("replay-grid");
+
+    // Toggle collapse if already open on the same row
+    if (this.#activeReplayVideoId === videoId && !drawer.hidden) {
+      drawer.hidden = true;
+      this.#activeReplayVideoId = null;
+      return;
+    }
+
+    this.#activeReplayVideoId = videoId;
+    drawer.hidden = false;
+    targetRow.append(drawer);
+
+    banner.hidden = false;
+    if (sim.would_pause) {
+      banner.setAttribute("data-state", "fail");
+      banner.textContent = `🚨 WOULD HAVE AUTO-PAUSED at Layer ${sim.pause_layer}/${sim.total_layers} — ${sim.pause_reason}`;
+    } else {
+      banner.setAttribute("data-state", "ok");
+      banner.textContent = `✅ Print Passed All ${sim.checked} Checkpoints (${sim.total_layers} layers) — 0 false positives!`;
+    }
+
+    const frames = Array.isArray(sim.frames) ? sim.frames : [];
+    this.#renderDefectChart(frames);
+    grid.replaceChildren(
+      ...frames.map((r) => {
+        const card = document.createElement("div");
+        card.className = "replay-step";
+        if (r.would_pause) card.setAttribute("data-pause", "true");
+        const src = r.image_url || r.image_data_url || "";
+        if (src) {
+          const img = document.createElement("img");
+          img.src = src;
+          img.alt = `Layer ${r.layer}`;
+          const frameCap = `Layer ${r.layer}/${r.total_layers} · Spaghetti ${r.spaghetti_pct}% · Warp ${r.warping_pct}% · Detach ${r.detachment_pct}%`;
+          img.addEventListener("click", () => {
+            this.#openLightbox(src, frameCap, `bambu_layer_${r.layer}.jpg`);
+          });
+          card.append(img);
+        }
+        const meta = document.createElement("div");
+        meta.className = "replay-step-meta";
+        const head = document.createElement("strong");
+        head.textContent = `${r.would_pause ? "🚨 PAUSE" : r.status === "WARNING" ? "⚠️ WARN" : "✅ OK"} · Layer ${r.layer}/${r.total_layers}`;
+        const sub = document.createElement("span");
+        sub.style.color = "var(--z-ink-2)";
+        sub.textContent = `Spaghetti ${r.spaghetti_pct}% · Warp ${r.warping_pct}% · Detach ${r.detachment_pct}%`;
+        meta.append(head, sub);
+        card.append(meta);
+        return card;
+      })
+    );
   }
 
   async #startReplay(videoId, targetRow = null) {
@@ -1748,6 +1870,14 @@ class BambuAIGuardPanel extends HTMLElement {
             const img = document.createElement("img");
             img.src = r.image_data_url;
             img.alt = `Layer ${r.layer}`;
+            const frameCap = `Layer ${r.layer}/${r.total_layers} · Spaghetti ${r.spaghetti_pct}% · Warp ${r.warping_pct}% · Detach ${r.detachment_pct}%`;
+            img.addEventListener("click", () => {
+              this.#openLightbox(
+                r.image_data_url,
+                frameCap,
+                `bambu_layer_${r.layer}.jpg`
+              );
+            });
             const meta = document.createElement("div");
             meta.className = "replay-step-meta";
             const head = document.createElement("strong");

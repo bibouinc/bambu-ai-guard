@@ -435,6 +435,20 @@ CARD_TEMPLATE.innerHTML = `
 
     <details class="history-drawer">
       <summary>
+        <span>Setup &amp; Connection Help (API Key / Printer Code)</span>
+        <span>▾</span>
+      </summary>
+      <div class="details-box" style="margin-top:8px;">
+        <strong>Free Gemini API Key:</strong> Open <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:var(--z-accent);font-weight:700;">aistudio.google.com/apikey</a> → <em>Create API Key</em>.<br/>
+        <strong>Find IP &amp; Access Code on Printer:</strong><br/>
+        • <strong>P1P / P1S:</strong> Settings → WLAN<br/>
+        • <strong>A1 / A1 Mini:</strong> Settings → LAN Only Mode (or WLAN)<br/>
+        • <strong>X1C / X1E:</strong> Settings → Network
+      </div>
+    </details>
+
+    <details class="history-drawer">
+      <summary>
         <span id="history-summary-label">Lifetime Print History (0 prints)</span>
         <span>▾</span>
       </summary>

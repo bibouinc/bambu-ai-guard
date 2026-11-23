@@ -64,6 +64,17 @@ No need to build a dashboard from scratch—installing **Bambu AI Guard** automa
 
 ## Quick Installation
 
+### Before You Start (30-Second Checklist)
+1. **Free Google Gemini API Key**:
+   - Go to [Google AI Studio (aistudio.google.com/apikey)](https://aistudio.google.com/apikey), sign in with any Google account, click **"Create API Key"**, and copy it. *(100% free tier — no credit card required).*
+2. **Your Printer Connection**:
+   - **Using `ha-bambulab` (Easiest)**: Nothing needed! Just pick your printer from the dropdown.
+   - **Standalone Direct LAN (No `ha-bambulab`)**: Grab your **IP Address** and **8-character Access Code** directly from your printer's screen:
+     - **P1P / P1S**: `Settings` → `WLAN`
+     - **A1 / A1 Mini**: `Settings` → `LAN Only Mode` (or `WLAN`)
+     - **X1C / X1E**: `Settings` → `Network`
+
+### Install via HACS
 1. Open **HACS** in Home Assistant → **Integrations** → top-right menu (`⋮`) → **Custom repositories**.
 2. Paste `https://github.com/bibouinc/bambu-ai-guard` and select category **Integration**.
 3. Click **Download**, restart Home Assistant, and go to **Settings → Devices & Services → + Add Integration → Bambu AI Guard**.

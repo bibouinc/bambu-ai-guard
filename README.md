@@ -16,6 +16,9 @@ Only the flagship X1C ships with built-in AI spaghetti detection, and even then,
 
 **We built Bambu AI Guard so every Bambu Lab owner can have automatic, reliable AI print protection inside Home Assistant—with zero monthly fees, zero idle CPU usage, and zero extra hardware.**
 
+> **Built for Low-Power Home Assistant Hardware (Raspberry Pi / HA Green):**  
+> Running local computer-vision models (like YOLO/ONNX) directly on a Raspberry Pi spikes CPU/RAM and still struggles to spot subtle 2 mm corner warping or bad first-layer adhesion. By offloading quick checkpoint snapshots to Google's **Gemini Decisions API** on the free tier, Bambu AI Guard uses **~0% CPU and < 5 MB RAM** on your Pi—no GPU or Coral TPU required.
+
 ---
 
 ## What It Solves
@@ -133,3 +136,9 @@ The moment you add the integration, **"Bambu AI Guard"** appears automatically i
 | `button` | `button.<printer>_purge_old_print_history_x` | Delete print history records older than the last `X` prints |
 
 </details>
+
+---
+
+### Disclaimer
+*Bambu AI Guard is an independent, unofficial open-source community project and is **not affiliated with, endorsed by, or sponsored by Bambu Lab**. "Bambu Lab", "P1P", "P1S", "A1", "A1 Mini", and "X1C" are trademarks of their respective owners.*
+

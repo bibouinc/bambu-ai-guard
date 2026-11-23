@@ -851,6 +851,43 @@ PANEL_SHEET.replaceSync(`
     color: var(--z-danger-ink);
   }
 
+  .chart-wrap {
+    background: var(--z-surface-2);
+    border: 1px solid var(--z-border-soft);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .chart-wrap[hidden] {
+    display: none;
+  }
+
+  .chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--z-ink-2);
+  }
+
+  .legend-dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    margin-right: 4px;
+  }
+
+  .chart-svg {
+    width: 100%;
+    height: 150px;
+    display: block;
+  }
+
   .replay-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
@@ -989,6 +1026,15 @@ PANEL_TEMPLATE.innerHTML = `
       </h2>
       <div class="slider-hint" style="margin-top:-6px;">Shows both your live <strong>AI Guarded</strong> prints (Completed / Aborted / Auto-Paused) and your <strong>Pre-Guard</strong> Bambu timelapses — click <strong>Simulate</strong> on any past timelapse to test your current AI settings (dry-run only).</div>
       <div class="replay-banner" id="replay-banner" hidden></div>
+      <div class="chart-wrap" id="replay-chart-wrap" hidden>
+        <div class="chart-legend">
+          <span><i class="legend-dot" style="background:#ef4444;"></i>Spaghetti %</span>
+          <span><i class="legend-dot" style="background:#f59e0b;"></i>Warping %</span>
+          <span><i class="legend-dot" style="background:#8b5cf6;"></i>Detachment %</span>
+          <span><i class="legend-dot" style="background:var(--z-ink-2);"></i>Auto-Pause Threshold</span>
+        </div>
+        <svg class="chart-svg" id="replay-chart-svg" viewBox="0 0 640 150" preserveAspectRatio="none"></svg>
+      </div>
       <div class="replay-grid" id="replay-grid"></div>
       <div class="unified-list" id="unified-history-list">
         <div class="details-box">Loading print history…</div>
@@ -1067,6 +1113,16 @@ PANEL_TEMPLATE.innerHTML = `
         </div>
         <div class="slider-hint">Inspects if this many minutes pass during a slow, large layer.</div>
         <input type="range" id="ctrl-mins" min="1" max="60" step="1" value="5" />
+      </div>
+
+      <hr class="section-divider" />
+      <div class="section-label"><ha-icon icon="mdi:key-variant"></ha-icon>Printer &amp; API Key</div>
+      <div class="control-row">
+        <div>
+          <span class="label-with-icon"><ha-icon icon="mdi:connection"></ha-icon>Printer IP, Access Code &amp; Gemini API Key</span>
+          <div class="slider-hint">Managed securely in Home Assistant Integration Settings (Admin only).</div>
+        </div>
+        <a href="/config/integrations/integration/bambu_ai_guard" class="zest-btn secondary" style="text-decoration:none;"><ha-icon icon="mdi:open-in-new"></ha-icon>Configure</a>
       </div>
     </div>
   </div>
@@ -1377,6 +1433,55 @@ class BambuAIGuardPanel extends HTMLElement {
     }
   }
 
+  #renderDefectChart(points) {
+    const sr = this.shadowRoot;
+    const wrap = sr.getElementById("replay-chart-wrap");
+    const svg = sr.getElementById("replay-chart-svg");
+    if (!wrap || !svg) return;
+    if (!Array.isArray(points) || points.length < 2) {
+      wrap.hidden = true;
+      return;
+    }
+    wrap.hidden = false;
+
+    const W = 640;
+    const H = 150;
+    const padL = 32;
+    const padR = 14;
+    const padT = 12;
+    const padB = 22;
+    const innerW = W - padL - padR;
+    const innerH = H - padT - padB;
+
+    const threshVal = Number(sr.getElementById("ctrl-thresh")?.value || 80);
+    const xAt = (i) => padL + (i / (points.length - 1)) * innerW;
+    const yAt = (pct) => padT + innerH - (Math.max(0, Math.min(100, Number(pct || 0))) / 100) * innerH;
+
+    const makePath = (key) =>
+      points
+        .map((pt, i) => `${i === 0 ? "M" : "L"}${xAt(i).toFixed(1)},${yAt(pt[key]).toFixed(1)}`)
+        .join(" ");
+
+    const threshY = yAt(threshVal).toFixed(1);
+    const firstLayer = points[0].layer ?? 1;
+    const lastLayer = points[points.length - 1].layer ?? points.length;
+
+    svg.innerHTML = `
+      <line x1="${padL}" y1="${yAt(100)}" x2="${W - padR}" y2="${yAt(100)}" stroke="currentColor" stroke-opacity="0.12" />
+      <line x1="${padL}" y1="${yAt(50)}" x2="${W - padR}" y2="${yAt(50)}" stroke="currentColor" stroke-opacity="0.12" />
+      <line x1="${padL}" y1="${yAt(0)}" x2="${W - padR}" y2="${yAt(0)}" stroke="currentColor" stroke-opacity="0.2" />
+      <line x1="${padL}" y1="${threshY}" x2="${W - padR}" y2="${threshY}" stroke="currentColor" stroke-opacity="0.5" stroke-dasharray="5 4" stroke-width="1.5" />
+      <text x="4" y="${yAt(100) + 4}" font-size="10" fill="currentColor" opacity="0.6">100%</text>
+      <text x="8" y="${yAt(50) + 4}" font-size="10" fill="currentColor" opacity="0.6">50%</text>
+      <text x="12" y="${yAt(0) + 3}" font-size="10" fill="currentColor" opacity="0.6">0%</text>
+      <text x="${padL}" y="${H - 5}" font-size="10" fill="currentColor" opacity="0.65">L${firstLayer}</text>
+      <text x="${W - padR}" y="${H - 5}" font-size="10" fill="currentColor" opacity="0.65" text-anchor="end">L${lastLayer}</text>
+      <path d="${makePath("warping_pct")}" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linejoin="round" />
+      <path d="${makePath("detachment_pct")}" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linejoin="round" />
+      <path d="${makePath("spaghetti_pct")}" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linejoin="round" />
+    `;
+  }
+
   async #pollReplayProgress() {
     if (!this.#hass) return;
     const sr = this.shadowRoot;
@@ -1406,6 +1511,7 @@ class BambuAIGuardPanel extends HTMLElement {
       }
 
       if (Array.isArray(p.results)) {
+        this.#renderDefectChart(p.results);
         grid.replaceChildren(
           ...p.results.map((r) => {
             const card = document.createElement("div");

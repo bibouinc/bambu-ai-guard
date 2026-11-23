@@ -72,13 +72,14 @@ At each checkpoint, Google's **Gemini Decisions API** scores your print across 4
 
 ---
 
-## Built-In Sidebar Panel, Dashboard Card & Lifetime History
+## Built-In Sidebar Panel, Timelapse Replay Simulator & Lifetime History
 
-The moment you add the integration, **"Bambu AI Guard"** appears automatically in your **Home Assistant left sidebar**—no manual dashboard setup required!
+The moment you add the integration, **"Bambu AI Guard"** appears automatically in your **Home Assistant left sidebar**—matching your native Home Assistant light or dark theme!
 - **Live Nozzle-Erased Snapshot** with layer badge and API latency.
 - **4 Live Probability Gauges** (`Spaghetti %`, `Warping %`, `Detachment %`, `First-Layer %`).
-- **Live Controls**: Trigger an immediate **Inspect Now (AI)** check, toggle **Auto-Pause**, adjust **Layer 1 Multi-Checks**, or switch between **Every X Layers** and **Every X Minutes**.
-- **Lifetime Print Logbook & 1-Click Purge**: Keeps a permanent history of your prints and failure photos forever—with a simple **"Purge Old (`> X`)"** button whenever you want to trim old records beyond your last `X` prints.
+- **Grouped Controls & Phone Push Alerts**: Toggle **Auto-Pause**, pick which **Phone(s)** receive instant push notifications with the evidence photo attached, and tune your **Layer 1 Multi-Checks** and **Layers/Minutes** sliders.
+- **🎬 Simulate on Previous Print (Timelapse Replay)**: Pick any past timelapse from your printer's SD card or Home Assistant `/media` folder and replay it layer-by-layer through the Gemini Decisions API to see the **exact layer where Auto-Pause would have triggered**—perfect for testing your confidence threshold without wasting a single gram of filament!
+- **Lifetime Print Logbook & Purge Dialog**: Keeps a permanent history of your prints forever, with a clean **"Purge History…"** dialog whenever you want to trim old records.
 - *(Want to embed it on another dashboard too? Just pick **Bambu AI Guard Card** from the Lovelace card picker.)*
 
 ---

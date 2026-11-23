@@ -463,6 +463,78 @@ PANEL_SHEET.replaceSync(`
     color: #ffffff;
     border-color: var(--z-danger-ink);
   }
+
+  .replay-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .replay-bar select {
+    flex: 1 1 260px;
+    background: var(--z-surface-2);
+    color: var(--z-ink);
+    border: 1px solid var(--z-border);
+    border-radius: 8px;
+    padding: 9px 11px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .replay-banner {
+    padding: 11px 14px;
+    border-radius: 10px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    border: 1px solid var(--z-border-soft);
+    background: var(--z-surface-2);
+  }
+
+  .replay-banner[data-state="ok"] {
+    background: var(--z-ok-bg);
+    color: var(--z-ok-ink);
+  }
+
+  .replay-banner[data-state="fail"] {
+    background: var(--z-danger-bg);
+    color: var(--z-danger-ink);
+  }
+
+  .replay-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+    gap: 10px;
+  }
+
+  .replay-step {
+    background: var(--z-surface-2);
+    border: 1px solid var(--z-border-soft);
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .replay-step[data-pause="true"] {
+    border: 2px solid var(--z-danger-ink);
+  }
+
+  .replay-step img {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    display: block;
+    background: #111;
+  }
+
+  .replay-step-meta {
+    padding: 8px 10px;
+    font-size: 0.76rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
 `);
 
 const PANEL_TEMPLATE = document.createElement("template");
@@ -599,6 +671,22 @@ PANEL_TEMPLATE.innerHTML = `
 
     <div class="panel-card full-width">
       <h2 class="card-title">
+        <span>Simulate on Previous Print (Timelapse Replay)</span>
+        <button type="button" class="zest-btn secondary" id="btn-refresh-timelapses">Refresh List</button>
+      </h2>
+      <div class="slider-hint" style="margin-top:-6px;">Pick a past timelapse to replay layer-by-layer with your current settings and see the exact layer where Auto-Pause would have triggered (dry-run only — never touches your printer).</div>
+      <div class="replay-bar">
+        <select id="replay-select">
+          <option value="">Loading previous print timelapses…</option>
+        </select>
+        <button type="button" class="zest-btn" id="btn-run-replay">Simulate Print</button>
+      </div>
+      <div class="replay-banner" id="replay-banner" hidden></div>
+      <div class="replay-grid" id="replay-grid"></div>
+    </div>
+
+    <div class="panel-card full-width">
+      <h2 class="card-title">
         <span id="history-title">Lifetime Print History (0 prints)</span>
         <button type="button" class="zest-btn secondary" id="btn-open-purge">Purge History…</button>
       </h2>
@@ -630,6 +718,8 @@ class BambuAIGuardPanel extends HTMLElement {
   #hass = null;
   #bound = false;
   #entityMap = {};
+  #timelapsesLoaded = false;
+  #pollTimer = null;
 
   constructor() {
     super();
@@ -724,6 +814,12 @@ class BambuAIGuardPanel extends HTMLElement {
           }
         });
       };
+      sr.getElementById("btn-refresh-timelapses").addEventListener("click", () => {
+        this.#loadTimelapses();
+      });
+      sr.getElementById("btn-run-replay").addEventListener("click", () => {
+        this.#startReplay();
+      });
       bindNum("ctrl-l1", "l1");
       bindNum("ctrl-layers", "layers");
       bindNum("ctrl-mins", "mins");
@@ -733,8 +829,140 @@ class BambuAIGuardPanel extends HTMLElement {
     this.#render();
   }
 
+  disconnectedCallback() {
+    if (this.#pollTimer) {
+      clearInterval(this.#pollTimer);
+      this.#pollTimer = null;
+    }
+  }
+
+  async #loadTimelapses() {
+    if (!this.#hass) return;
+    const sel = this.shadowRoot.getElementById("replay-select");
+    try {
+      const data = await this.#hass.callApi("GET", "bambu_ai_guard/timelapses");
+      const list = Array.isArray(data?.timelapses) ? data.timelapses : [];
+      if (list.length === 0) {
+        sel.replaceChildren(
+          Object.assign(document.createElement("option"), {
+            value: "",
+            textContent: "No timelapses found in /media or printer SD card",
+          })
+        );
+        return;
+      }
+      sel.replaceChildren(
+        ...list.map((item) => {
+          const opt = document.createElement("option");
+          opt.value = item.id;
+          const sizeStr = item.size_mb ? ` (${item.size_mb} MB)` : " (Printer SD)";
+          opt.textContent = `${item.label}${sizeStr}`;
+          return opt;
+        })
+      );
+    } catch (err) {
+      sel.replaceChildren(
+        Object.assign(document.createElement("option"), {
+          value: "",
+          textContent: "Could not load timelapses — restart HA to activate v1.5.0",
+        })
+      );
+    }
+  }
+
+  async #startReplay() {
+    if (!this.#hass) return;
+    const sr = this.shadowRoot;
+    const videoId = sr.getElementById("replay-select").value;
+    if (!videoId) return;
+
+    const btn = sr.getElementById("btn-run-replay");
+    const banner = sr.getElementById("replay-banner");
+    btn.disabled = true;
+    btn.textContent = "Simulating…";
+    banner.hidden = false;
+    banner.removeAttribute("data-state");
+    banner.textContent = "Extracting timelapse layer frames and running Gemini Decisions API…";
+
+    try {
+      await this.#hass.callApi("POST", "bambu_ai_guard/simulate", {
+        video_id: videoId,
+      });
+      if (this.#pollTimer) clearInterval(this.#pollTimer);
+      this.#pollTimer = setInterval(() => this.#pollReplayProgress(), 1200);
+      await this.#pollReplayProgress();
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = "Simulate Print";
+      banner.setAttribute("data-state", "fail");
+      banner.textContent = `Simulation error: ${err.message || err}`;
+    }
+  }
+
+  async #pollReplayProgress() {
+    if (!this.#hass) return;
+    const sr = this.shadowRoot;
+    try {
+      const p = await this.#hass.callApi("GET", "bambu_ai_guard/simulate");
+      const banner = sr.getElementById("replay-banner");
+      const grid = sr.getElementById("replay-grid");
+      const btn = sr.getElementById("btn-run-replay");
+
+      banner.hidden = false;
+      if (p.error) {
+        banner.setAttribute("data-state", "fail");
+        banner.textContent = `Simulation error: ${p.error}`;
+      } else if (p.running) {
+        banner.removeAttribute("data-state");
+        banner.textContent = `Replaying ${p.video_name || "print"}: checked ${p.checked}/${p.total_checkpoints || "?"} checkpoints (total ${p.total_layers || "?"} layers)…`;
+      } else if (p.would_pause) {
+        banner.setAttribute("data-state", "fail");
+        banner.textContent = `🚨 WOULD HAVE AUTO-PAUSED at Layer ${p.pause_layer}/${p.total_layers} — ${p.pause_reason}`;
+      } else if (p.checked > 0) {
+        banner.setAttribute("data-state", "ok");
+        banner.textContent = `✅ Print Passed All ${p.checked} Checkpoints (${p.total_layers} layers) — 0 false positives!`;
+      }
+
+      if (Array.isArray(p.results)) {
+        grid.replaceChildren(
+          ...p.results.map((r) => {
+            const card = document.createElement("div");
+            card.className = "replay-step";
+            if (r.would_pause) card.setAttribute("data-pause", "true");
+            const img = document.createElement("img");
+            img.src = r.image_data_url;
+            img.alt = `Layer ${r.layer}`;
+            const meta = document.createElement("div");
+            meta.className = "replay-step-meta";
+            const head = document.createElement("strong");
+            head.textContent = `${r.would_pause ? "🚨 PAUSE" : r.status === "WARNING" ? "⚠️ WARN" : "✅ OK"} · Layer ${r.layer}/${r.total_layers}`;
+            const sub = document.createElement("span");
+            sub.style.color = "var(--z-ink-2)";
+            sub.textContent = `Spaghetti ${r.spaghetti_pct}% · Warp ${r.warping_pct}% · Detach ${r.detachment_pct}%`;
+            meta.append(head, sub);
+            card.append(img, meta);
+            return card;
+          })
+        );
+      }
+
+      if (!p.running) {
+        btn.disabled = false;
+        btn.textContent = "Simulate Print";
+        if (this.#pollTimer) {
+          clearInterval(this.#pollTimer);
+          this.#pollTimer = null;
+        }
+      }
+    } catch (_) {}
+  }
+
   set hass(hass) {
     this.#hass = hass;
+    if (!this.#timelapsesLoaded && hass) {
+      this.#timelapsesLoaded = true;
+      this.#loadTimelapses();
+    }
     this.#render();
   }
 

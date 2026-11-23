@@ -1265,7 +1265,11 @@ class BambuAIGuardPanel extends HTMLElement {
         banner.textContent = `Simulation error: ${p.error}`;
       } else if (p.running) {
         banner.removeAttribute("data-state");
-        banner.textContent = `Replaying ${p.video_name || "print"}: checked ${p.checked}/${p.total_checkpoints || "?"} checkpoints (total ${p.total_layers || "?"} layers)…`;
+        if (!p.total_checkpoints) {
+          banner.textContent = `⏳ Loading ${p.video_name || "timelapse"} and extracting checkpoint frames…`;
+        } else {
+          banner.textContent = `🔍 Inspecting checkpoint ${p.checked} of ${p.total_checkpoints} (${p.total_layers} layers)…`;
+        }
       } else if (p.would_pause) {
         banner.setAttribute("data-state", "fail");
         banner.textContent = `🚨 WOULD HAVE AUTO-PAUSED at Layer ${p.pause_layer}/${p.total_layers} — ${p.pause_reason}`;

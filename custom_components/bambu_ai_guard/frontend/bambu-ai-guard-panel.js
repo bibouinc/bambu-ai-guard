@@ -363,6 +363,43 @@ PANEL_SHEET.replaceSync(`
     cursor: pointer;
   }
 
+  .slider-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 9px 11px;
+    border-radius: 10px;
+    background: var(--z-surface-2);
+    border: 1.5px solid var(--z-border-soft);
+    font-size: 0.84rem;
+    font-weight: 700;
+  }
+
+  .slider-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .slider-badge {
+    background: var(--z-surface);
+    color: var(--z-ink);
+    border: 1.5px solid var(--z-border);
+    border-radius: 8px;
+    padding: 2px 8px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .slider-row input[type="range"] {
+    width: 100%;
+    accent-color: var(--z-accent);
+    cursor: pointer;
+    margin: 0;
+  }
+
   .actions-row {
     display: flex;
     flex-wrap: wrap;
@@ -498,24 +535,36 @@ PANEL_TEMPLATE.innerHTML = `
         </select>
       </div>
 
-      <div class="control-row">
-        <label for="ctrl-l1">Layer 1 Multi-Checks (0–5)</label>
-        <input type="number" id="ctrl-l1" min="0" max="5" step="1" />
+      <div class="slider-row">
+        <div class="slider-head">
+          <label for="ctrl-l1">Layer 1 Multi-Checks</label>
+          <span class="slider-badge" id="val-ctrl-l1">3 checks</span>
+        </div>
+        <input type="range" id="ctrl-l1" min="0" max="5" step="1" value="3" />
       </div>
 
-      <div class="control-row">
-        <label for="ctrl-layers">Every X Layers</label>
-        <input type="number" id="ctrl-layers" min="1" max="50" step="1" />
+      <div class="slider-row">
+        <div class="slider-head">
+          <label for="ctrl-layers">Every X Layers</label>
+          <span class="slider-badge" id="val-ctrl-layers">10 layers</span>
+        </div>
+        <input type="range" id="ctrl-layers" min="1" max="50" step="1" value="10" />
       </div>
 
-      <div class="control-row">
-        <label for="ctrl-mins">Every X Minutes</label>
-        <input type="number" id="ctrl-mins" min="1" max="60" step="1" />
+      <div class="slider-row">
+        <div class="slider-head">
+          <label for="ctrl-mins">Every X Minutes</label>
+          <span class="slider-badge" id="val-ctrl-mins">5 min</span>
+        </div>
+        <input type="range" id="ctrl-mins" min="1" max="60" step="1" value="5" />
       </div>
 
-      <div class="control-row">
-        <label for="ctrl-thresh">Auto-Pause Threshold (%)</label>
-        <input type="number" id="ctrl-thresh" min="50" max="99" step="5" />
+      <div class="slider-row">
+        <div class="slider-head">
+          <label for="ctrl-thresh">Auto-Pause Threshold</label>
+          <span class="slider-badge" id="val-ctrl-thresh">80%</span>
+        </div>
+        <input type="range" id="ctrl-thresh" min="50" max="95" step="5" value="80" />
       </div>
     </div>
 
@@ -587,13 +636,25 @@ class BambuAIGuardPanel extends HTMLElement {
           });
         }
       });
+      const formatBadge = (elId, rawVal) => {
+        const n = Math.round(Number(rawVal));
+        const badge = sr.getElementById(`val-${elId}`);
+        if (!badge || Number.isNaN(n)) return;
+        if (elId === "ctrl-l1") badge.textContent = `${n} check${n === 1 ? "" : "s"}`;
+        else if (elId === "ctrl-layers") badge.textContent = `${n} layer${n === 1 ? "" : "s"}`;
+        else if (elId === "ctrl-mins") badge.textContent = `${n} min`;
+        else if (elId === "ctrl-thresh") badge.textContent = `${n}%`;
+      };
       const bindNum = (elId, key) => {
-        sr.getElementById(elId).addEventListener("change", (e) => {
+        const el = sr.getElementById(elId);
+        el.addEventListener("input", (e) => formatBadge(elId, e.target.value));
+        el.addEventListener("change", (e) => {
+          formatBadge(elId, e.target.value);
           const eid = this.#entityMap[key];
           if (this.#hass && eid) {
             this.#hass.callService("number", "set_value", {
               entity_id: eid,
-              value: Number(e.target.value),
+              value: Math.round(Number(e.target.value)),
             });
           }
         });
@@ -696,21 +757,30 @@ class BambuAIGuardPanel extends HTMLElement {
       const s = this.#entityMap[key] ? this.#hass.states[this.#entityMap[key]] : null;
       if (s) sr.getElementById(elId).checked = s.state === "on";
     };
-    const syncVal = (elId, key) => {
+    const syncVal = (elId, key, isInt = false) => {
       const el = sr.getElementById(elId);
       const s = this.#entityMap[key] ? this.#hass.states[this.#entityMap[key]] : null;
       if (s && document.activeElement !== el && sr.activeElement !== el) {
-        el.value = s.state;
+        const val = isInt ? String(Math.round(Number(s.state))) : s.state;
+        el.value = val;
+        const badge = sr.getElementById(`val-${elId}`);
+        if (badge && isInt) {
+          const n = Math.round(Number(s.state));
+          if (elId === "ctrl-l1") badge.textContent = `${n} check${n === 1 ? "" : "s"}`;
+          else if (elId === "ctrl-layers") badge.textContent = `${n} layer${n === 1 ? "" : "s"}`;
+          else if (elId === "ctrl-mins") badge.textContent = `${n} min`;
+          else if (elId === "ctrl-thresh") badge.textContent = `${n}%`;
+        }
       }
     };
     syncCheck("ctrl-autopause", "autoPause");
     syncCheck("ctrl-median", "median");
-    syncVal("ctrl-mode", "mode");
-    syncVal("ctrl-l1", "l1");
-    syncVal("ctrl-layers", "layers");
-    syncVal("ctrl-mins", "mins");
-    syncVal("ctrl-thresh", "thresh");
-    syncVal("ctrl-keep", "keep");
+    syncVal("ctrl-mode", "mode", false);
+    syncVal("ctrl-l1", "l1", true);
+    syncVal("ctrl-layers", "layers", true);
+    syncVal("ctrl-mins", "mins", true);
+    syncVal("ctrl-thresh", "thresh", true);
+    syncVal("ctrl-keep", "keep", true);
 
     const histObj = this.#entityMap.history ? this.#hass.states[this.#entityMap.history] : null;
     if (histObj) {

@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from .const import DOMAIN, PLATFORMS, SERVICE_INSPECT_NOW, SERVICE_PURGE_HISTORY
 from .coordinator import BambuAIGuardCoordinator
 from .frontend import BambuAIGuardCardRegistration
-from .replay import PrintReplaySimulator
+from .replay import PrintReplaySimulator, extract_last_frame_thumb_sync
 
 
 def _get_first_coordinator(hass: HomeAssistant) -> BambuAIGuardCoordinator | None:
@@ -38,6 +38,30 @@ class TimelapsesListView(HomeAssistantView):
         code = coord.access_code if coord else ""
         items = await self.simulator.async_list_timelapses(self.hass, ip, code)
         return web.json_response({"timelapses": items})
+
+
+class TimelapseThumbView(HomeAssistantView):
+    """HTTP API serving last-frame JPEG thumbnails for the Try on a Previous Print gallery."""
+
+    url = "/api/bambu_ai_guard/timelapse_thumb"
+    name = "api:bambu_ai_guard:timelapse_thumb"
+    requires_auth = False
+
+    def __init__(self, hass: HomeAssistant) -> None:
+        self.hass = hass
+
+    async def get(self, request: web.Request) -> web.Response:
+        video_id = request.query.get("video_id", "")
+        jpg = await self.hass.async_add_executor_job(
+            extract_last_frame_thumb_sync, video_id
+        )
+        if not jpg:
+            return web.Response(status=404)
+        return web.Response(
+            body=jpg,
+            content_type="image/jpeg",
+            headers={"Cache-Control": "public, max-age=86400"},
+        )
 
 
 class ReplaySimulateView(HomeAssistantView):
@@ -94,6 +118,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         simulator = PrintReplaySimulator()
         hass.data[DOMAIN]["replay_simulator"] = simulator
         hass.http.register_view(TimelapsesListView(hass, simulator))
+        hass.http.register_view(TimelapseThumbView(hass))
         hass.http.register_view(ReplaySimulateView(hass, simulator))
 
     coordinator = BambuAIGuardCoordinator(hass, entry)

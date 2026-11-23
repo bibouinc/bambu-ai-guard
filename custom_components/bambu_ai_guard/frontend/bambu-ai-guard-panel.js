@@ -464,6 +464,69 @@ PANEL_SHEET.replaceSync(`
     border-color: var(--z-danger-ink);
   }
 
+  .gallery-strip {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(175px, 195px);
+    gap: 12px;
+    overflow-x: auto;
+    padding: 4px 2px 10px;
+    scroll-snap-type: x proximity;
+  }
+
+  .gallery-card {
+    scroll-snap-align: start;
+    background: var(--z-surface-2);
+    border: 1.5px solid var(--z-border-soft);
+    border-radius: 11px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: border-color 0.15s ease, transform 0.12s ease;
+    padding: 0;
+    text-align: left;
+    color: var(--z-ink);
+  }
+
+  .gallery-card:hover {
+    border-color: var(--z-accent);
+    transform: translateY(-2px);
+  }
+
+  .gallery-card[data-selected="true"] {
+    border: 2px solid var(--z-accent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--z-accent) 25%, transparent);
+  }
+
+  .gallery-thumb {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    display: block;
+    background: #141414;
+  }
+
+  .gallery-meta {
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .gallery-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .gallery-sub {
+    font-size: 0.7rem;
+    color: var(--z-ink-2);
+  }
+
   .replay-bar {
     display: flex;
     flex-wrap: wrap;
@@ -671,15 +734,15 @@ PANEL_TEMPLATE.innerHTML = `
 
     <div class="panel-card full-width">
       <h2 class="card-title">
-        <span>Simulate on Previous Print (Timelapse Replay)</span>
-        <button type="button" class="zest-btn secondary" id="btn-refresh-timelapses">Refresh List</button>
+        <span>Try on a Previous Print</span>
+        <div class="actions-row">
+          <button type="button" class="zest-btn secondary" id="btn-refresh-timelapses">Refresh</button>
+          <button type="button" class="zest-btn" id="btn-run-replay" disabled>Simulate Selected Print</button>
+        </div>
       </h2>
-      <div class="slider-hint" style="margin-top:-6px;">Pick a past timelapse to replay layer-by-layer with your current settings and see the exact layer where Auto-Pause would have triggered (dry-run only — never touches your printer).</div>
-      <div class="replay-bar">
-        <select id="replay-select">
-          <option value="">Loading previous print timelapses…</option>
-        </select>
-        <button type="button" class="zest-btn" id="btn-run-replay">Simulate Print</button>
+      <div class="slider-hint" style="margin-top:-6px;">Pick any previous print below to replay it with your current settings and see the exact layer where Auto-Pause would have triggered (dry-run only).</div>
+      <div class="gallery-strip" id="replay-gallery">
+        <div class="details-box">Loading previous print thumbnails…</div>
       </div>
       <div class="replay-banner" id="replay-banner" hidden></div>
       <div class="replay-grid" id="replay-grid"></div>
@@ -719,6 +782,7 @@ class BambuAIGuardPanel extends HTMLElement {
   #bound = false;
   #entityMap = {};
   #timelapsesLoaded = false;
+  #selectedVideoId = "";
   #pollTimer = null;
 
   constructor() {
@@ -838,42 +902,84 @@ class BambuAIGuardPanel extends HTMLElement {
 
   async #loadTimelapses() {
     if (!this.#hass) return;
-    const sel = this.shadowRoot.getElementById("replay-select");
+    const gallery = this.shadowRoot.getElementById("replay-gallery");
+    const runBtn = this.shadowRoot.getElementById("btn-run-replay");
     try {
       const data = await this.#hass.callApi("GET", "bambu_ai_guard/timelapses");
       const list = Array.isArray(data?.timelapses) ? data.timelapses : [];
       if (list.length === 0) {
-        sel.replaceChildren(
-          Object.assign(document.createElement("option"), {
-            value: "",
-            textContent: "No timelapses found in /media or printer SD card",
-          })
-        );
+        gallery.innerHTML = `<div class="details-box">No previous print timelapses found in /media or printer SD card.</div>`;
+        runBtn.disabled = true;
         return;
       }
-      sel.replaceChildren(
-        ...list.map((item) => {
-          const opt = document.createElement("option");
-          opt.value = item.id;
-          const sizeStr = item.size_mb ? ` (${item.size_mb} MB)` : " (Printer SD)";
-          opt.textContent = `${item.label}${sizeStr}`;
-          return opt;
+
+      if (!this.#selectedVideoId || !list.some((x) => x.id === this.#selectedVideoId)) {
+        this.#selectedVideoId = list[0].id;
+      }
+      runBtn.disabled = false;
+
+      gallery.replaceChildren(
+        ...list.slice(0, 20).map((item) => {
+          const card = document.createElement("button");
+          card.type = "button";
+          card.className = "gallery-card";
+          card.dataset.videoId = item.id;
+          if (item.id === this.#selectedVideoId) {
+            card.setAttribute("data-selected", "true");
+          }
+
+          if (item.thumb_url) {
+            const img = document.createElement("img");
+            img.className = "gallery-thumb";
+            img.loading = "lazy";
+            img.src = item.thumb_url;
+            img.alt = item.label;
+            card.append(img);
+          } else {
+            const ph = document.createElement("div");
+            ph.className = "gallery-thumb";
+            ph.style.display = "grid";
+            ph.style.placeItems = "center";
+            ph.style.color = "#aaa";
+            ph.style.fontSize = "0.75rem";
+            ph.textContent = "Printer SD Timelapse";
+            card.append(ph);
+          }
+
+          const meta = document.createElement("div");
+          meta.className = "gallery-meta";
+          const t = document.createElement("div");
+          t.className = "gallery-title";
+          t.textContent = item.label;
+          t.title = item.label;
+          const s = document.createElement("div");
+          s.className = "gallery-sub";
+          s.textContent = item.size_mb ? `${item.size_mb} MB` : "SD Card";
+          meta.append(t, s);
+          card.append(meta);
+
+          card.addEventListener("click", () => {
+            this.#selectedVideoId = item.id;
+            gallery.querySelectorAll(".gallery-card").forEach((el) => {
+              el.setAttribute(
+                "data-selected",
+                el.dataset.videoId === item.id ? "true" : "false"
+              );
+            });
+            runBtn.disabled = false;
+          });
+          return card;
         })
       );
     } catch (err) {
-      sel.replaceChildren(
-        Object.assign(document.createElement("option"), {
-          value: "",
-          textContent: "Could not load timelapses — restart HA to activate v1.5.0",
-        })
-      );
+      gallery.innerHTML = `<div class="details-box">Could not load previous prints — restart Home Assistant to activate v1.5.1.</div>`;
     }
   }
 
   async #startReplay() {
     if (!this.#hass) return;
     const sr = this.shadowRoot;
-    const videoId = sr.getElementById("replay-select").value;
+    const videoId = this.#selectedVideoId;
     if (!videoId) return;
 
     const btn = sr.getElementById("btn-run-replay");

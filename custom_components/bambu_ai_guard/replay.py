@@ -85,6 +85,7 @@ def _list_local_timelapses_sync() -> list[dict[str, Any]]:
                             "path": real,
                             "size_mb": round(stat.st_size / (1024 * 1024), 2),
                             "mtime": stat.st_mtime,
+                            "thumb_url": f"/api/bambu_ai_guard/timelapse_thumb?video_id=local:{real}",
                         }
                     )
                 except OSError:
@@ -149,6 +150,55 @@ def _download_ftps_timelapse_sync(
     except Exception as err:  # noqa: BLE001
         LOGGER.warning("FTPS download failed for %s: %s", remote_name, err)
         return False
+
+
+def extract_last_frame_thumb_sync(video_id: str) -> bytes | None:
+    """Return cached or freshly extracted last-frame JPEG thumbnail for a local /media timelapse."""
+    if not video_id.startswith("local:"):
+        return None
+    video_path = Path(video_id.removeprefix("local:")).resolve()
+    if not str(video_path).startswith("/media/") or not video_path.exists():
+        return None
+
+    # Check pre-generated thumbnail in .thumbs/ if present
+    thumbs_dir = video_path.parent / ".thumbs"
+    for cand in (
+        thumbs_dir / f"{video_path.name}.jpg",
+        thumbs_dir / f"{video_path.stem}.jpg",
+    ):
+        if cand.exists() and cand.stat().st_size > 1000:
+            try:
+                return cand.read_bytes()
+            except OSError:
+                pass
+
+    # Extract last frame quickly via sseof -0.5 with ffmpeg
+    with tempfile.TemporaryDirectory(prefix="bambu_thumb_") as tmpdir:
+        out_jpg = Path(tmpdir) / "thumb.jpg"
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-v",
+                "error",
+                "-sseof",
+                "-0.5",
+                "-i",
+                str(video_path),
+                "-frames:v",
+                "1",
+                "-vf",
+                "scale=480:-1",
+                "-q:v",
+                "5",
+                str(out_jpg),
+            ],
+            capture_output=True,
+            timeout=10,
+            check=False,
+        )
+        if out_jpg.exists() and out_jpg.stat().st_size > 1000:
+            return out_jpg.read_bytes()
+    return None
 
 
 def _probe_and_extract_frames_sync(

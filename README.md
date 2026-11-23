@@ -33,6 +33,27 @@ Only the flagship X1C ships with built-in AI spaghetti detection, and even then,
 
 ## How It Works (In 3 Simple Steps)
 
+```mermaid
+flowchart LR
+    P["Bambu Lab Printer (P1P / P1S / A1 / A1 Mini / X1C)"]
+    T["Smart Triggers (Layer 1 Multi-Check + Every X Layers / Y Min)"]
+    C{"Printer Kinematics"}
+    M["3-Frame Median Filter (Erases Toolhead on CoreXY)"]
+    S["Crisp Single Frame (Zero Blur on A1 Bed-Slinger)"]
+    AI["Google Gemini Decisions API (Spaghetti, Warping, Detachment, Layer 1)"]
+    OK["OK: Update Sidebar Panel & Lifetime Print History"]
+    FAIL["FAILURE: Auto-Pause Printer + HA Alert + Save Photo"]
+
+    P -->|"LAN Telemetry / ha-bambulab"| T
+    T --> C
+    C -->|"CoreXY"| M
+    C -->|"Bed-Slinger"| S
+    M --> AI
+    S --> AI
+    AI -->|"Healthy"| OK
+    AI -->|"Defect Detected"| FAIL
+```
+
 ### 1. Works 100% Standalone Over Wi-Fi (30-Second Setup)
 **Bambu AI Guard works completely standalone**—no other integration, no broker, and no cloud bridge required:
 - Enter your printer's **LAN IP** and **8-character Access Code** (found right on your printer screen), paste your free **Google Gemini API Key**, and click **Submit**.

@@ -326,7 +326,36 @@ PANEL_SHEET.replaceSync(`
     font-variant-numeric: tabular-nums;
   }
 
+  .label-with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .label-with-icon ha-icon,
+  .section-label ha-icon,
+  .card-title ha-icon,
+  .metric-head ha-icon,
+  button.zest-btn ha-icon {
+    --mdc-icon-size: 18px;
+    color: var(--z-accent);
+    flex-shrink: 0;
+  }
+
+  button.zest-btn ha-icon {
+    color: currentColor;
+  }
+
+  button.zest-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
   .section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-size: 0.72rem;
     font-weight: 800;
     text-transform: uppercase;
@@ -625,8 +654,8 @@ PANEL_TEMPLATE.innerHTML = `
   <div class="shell">
     <div class="panel-card">
       <h2 class="card-title">
-        <span>Live AI Camera Inspection</span>
-        <button type="button" class="zest-btn" id="btn-inspect">Inspect Now (AI)</button>
+        <span class="label-with-icon"><ha-icon icon="mdi:camera-iris"></ha-icon>Live AI Camera Inspection</span>
+        <button type="button" class="zest-btn" id="btn-inspect"><ha-icon icon="mdi:magnify-scan"></ha-icon>Inspect Now (AI)</button>
       </h2>
       <div class="viewport">
         <img id="snapshot-img" alt="Bambu AI Guard Snapshot" hidden />
@@ -639,19 +668,19 @@ PANEL_TEMPLATE.innerHTML = `
 
       <div class="metrics-grid">
         <div class="metric-box">
-          <div class="metric-head"><span>Spaghetti</span><span class="metric-val" id="val-spaghetti">—</span></div>
+          <div class="metric-head"><span class="label-with-icon"><ha-icon icon="mdi:pasta"></ha-icon>Spaghetti</span><span class="metric-val" id="val-spaghetti">—</span></div>
           <div class="bar-track"><div class="bar-fill" id="bar-spaghetti"></div></div>
         </div>
         <div class="metric-box">
-          <div class="metric-head"><span>Corner Warping</span><span class="metric-val" id="val-warping">—</span></div>
+          <div class="metric-head"><span class="label-with-icon"><ha-icon icon="mdi:angle-acute"></ha-icon>Corner Warping</span><span class="metric-val" id="val-warping">—</span></div>
           <div class="bar-track"><div class="bar-fill" id="bar-warping"></div></div>
         </div>
         <div class="metric-box">
-          <div class="metric-head"><span>Part Detachment</span><span class="metric-val" id="val-detachment">—</span></div>
+          <div class="metric-head"><span class="label-with-icon"><ha-icon icon="mdi:cube-off-outline"></ha-icon>Part Detachment</span><span class="metric-val" id="val-detachment">—</span></div>
           <div class="bar-track"><div class="bar-fill" id="bar-detachment"></div></div>
         </div>
         <div class="metric-box">
-          <div class="metric-head"><span>First-Layer Defect</span><span class="metric-val" id="val-first-layer">—</span></div>
+          <div class="metric-head"><span class="label-with-icon"><ha-icon icon="mdi:layers-off"></ha-icon>First-Layer Defect</span><span class="metric-val" id="val-first-layer">—</span></div>
           <div class="bar-track"><div class="bar-fill" id="bar-first-layer"></div></div>
         </div>
       </div>
@@ -660,13 +689,13 @@ PANEL_TEMPLATE.innerHTML = `
     </div>
 
     <div class="panel-card">
-      <h2 class="card-title"><span>Guard Settings</span></h2>
+      <h2 class="card-title"><span class="label-with-icon"><ha-icon icon="mdi:tune-variant"></ha-icon>Guard Settings</span></h2>
 
-      <div class="section-label">Safety &amp; Alerts</div>
+      <div class="section-label"><ha-icon icon="mdi:shield-check-outline"></ha-icon>Safety &amp; Alerts</div>
 
       <div class="control-row">
         <div>
-          <label for="ctrl-autopause">Auto-Pause on Failure</label>
+          <label for="ctrl-autopause" class="label-with-icon"><ha-icon icon="mdi:pause-octagon-outline"></ha-icon>Auto-Pause on Failure</label>
           <div class="slider-hint">Automatically pauses your printer if a critical failure is detected.</div>
         </div>
         <input type="checkbox" id="ctrl-autopause" />
@@ -674,7 +703,7 @@ PANEL_TEMPLATE.innerHTML = `
 
       <div class="slider-row">
         <div class="slider-head">
-          <label for="ctrl-thresh">Auto-Pause Confidence</label>
+          <label for="ctrl-thresh" class="label-with-icon"><ha-icon icon="mdi:gauge"></ha-icon>Auto-Pause Confidence</label>
           <span class="slider-badge" id="val-ctrl-thresh">80%</span>
         </div>
         <div class="slider-hint">80% recommended. Lower pauses earlier; higher pauses only on obvious failures.</div>
@@ -683,7 +712,7 @@ PANEL_TEMPLATE.innerHTML = `
 
       <div class="control-row">
         <div>
-          <label for="ctrl-notify">Phone Push Notifications</label>
+          <label for="ctrl-notify" class="label-with-icon"><ha-icon icon="mdi:cellphone-message"></ha-icon>Phone Push Notifications</label>
           <div class="slider-hint">Sends an instant alert with the snapshot photo to your phone on defects.</div>
         </div>
         <select id="ctrl-notify">
@@ -693,10 +722,10 @@ PANEL_TEMPLATE.innerHTML = `
       </div>
 
       <hr class="section-divider" />
-      <div class="section-label">Inspection Schedule</div>
+      <div class="section-label"><ha-icon icon="mdi:calendar-clock"></ha-icon>Inspection Schedule</div>
 
       <div class="control-row">
-        <label for="ctrl-mode">When to Check Your Print</label>
+        <label for="ctrl-mode" class="label-with-icon"><ha-icon icon="mdi:clock-check-outline"></ha-icon>When to Check Your Print</label>
         <select id="ctrl-mode">
           <option value="both">Layers or Time (Recommended)</option>
           <option value="layers">By Layer Count Only</option>
@@ -706,7 +735,7 @@ PANEL_TEMPLATE.innerHTML = `
 
       <div class="slider-row">
         <div class="slider-head">
-          <label for="ctrl-l1">Extra Checks on Layer 1</label>
+          <label for="ctrl-l1" class="label-with-icon"><ha-icon icon="mdi:numeric-1-box-multiple-outline"></ha-icon>Extra Checks on Layer 1</label>
           <span class="slider-badge" id="val-ctrl-l1">3 checks</span>
         </div>
         <div class="slider-hint">Catches peeling or bad bed adhesion early while Layer 1 is still printing.</div>
@@ -715,7 +744,7 @@ PANEL_TEMPLATE.innerHTML = `
 
       <div class="slider-row" id="row-ctrl-layers">
         <div class="slider-head">
-          <label for="ctrl-layers">Check Every… (Layers)</label>
+          <label for="ctrl-layers" class="label-with-icon"><ha-icon icon="mdi:layers-triple-outline"></ha-icon>Check Every… (Layers)</label>
           <span class="slider-badge" id="val-ctrl-layers">10 layers</span>
         </div>
         <div class="slider-hint">Inspects your print every time this many layers finish.</div>
@@ -724,7 +753,7 @@ PANEL_TEMPLATE.innerHTML = `
 
       <div class="slider-row" id="row-ctrl-mins">
         <div class="slider-head">
-          <label for="ctrl-mins">Check Every… (Minutes)</label>
+          <label for="ctrl-mins" class="label-with-icon"><ha-icon icon="mdi:timer-outline"></ha-icon>Check Every… (Minutes)</label>
           <span class="slider-badge" id="val-ctrl-mins">5 min</span>
         </div>
         <div class="slider-hint">Inspects if this many minutes pass during a slow, large layer.</div>
@@ -734,10 +763,10 @@ PANEL_TEMPLATE.innerHTML = `
 
     <div class="panel-card full-width">
       <h2 class="card-title">
-        <span>Try on a Previous Print</span>
+        <span class="label-with-icon"><ha-icon icon="mdi:movie-play-outline"></ha-icon>Try on a Previous Print</span>
         <div class="actions-row">
-          <button type="button" class="zest-btn secondary" id="btn-refresh-timelapses">Refresh</button>
-          <button type="button" class="zest-btn" id="btn-run-replay" disabled>Simulate Selected Print</button>
+          <button type="button" class="zest-btn secondary" id="btn-refresh-timelapses"><ha-icon icon="mdi:refresh"></ha-icon>Refresh</button>
+          <button type="button" class="zest-btn" id="btn-run-replay" disabled><ha-icon icon="mdi:play-circle-outline"></ha-icon>Simulate Selected Print</button>
         </div>
       </h2>
       <div class="slider-hint" style="margin-top:-6px;">Pick any previous print below to replay it with your current settings and see the exact layer where Auto-Pause would have triggered (dry-run only).</div>
@@ -750,8 +779,8 @@ PANEL_TEMPLATE.innerHTML = `
 
     <div class="panel-card full-width">
       <h2 class="card-title">
-        <span id="history-title">Lifetime Print History (0 prints)</span>
-        <button type="button" class="zest-btn secondary" id="btn-open-purge">Purge History…</button>
+        <span class="label-with-icon"><ha-icon icon="mdi:history"></ha-icon><span id="history-title">Lifetime Print History (0 prints)</span></span>
+        <button type="button" class="zest-btn secondary" id="btn-open-purge"><ha-icon icon="mdi:delete-sweep-outline"></ha-icon>Purge History…</button>
       </h2>
       <div class="history-table" id="history-table"></div>
     </div>

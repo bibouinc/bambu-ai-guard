@@ -12,106 +12,39 @@ PANEL_SHEET.replaceSync(`
     min-height: 100vh;
     box-sizing: border-box;
     color-scheme: light dark;
-    --bg-light: #F2F9ED;
-    --surface-light: #FDFFFB;
-    --surface-2-light: #E7F2DF;
-    --ink-light: #1A260E;
-    --ink-2-light: #586251;
-    --border-light: #1A260E;
-    --border-soft-light: #D8E0D1;
-    --shadow-sm-light: 0 3px 0 #1A260E;
-    --accent-light: #538900;
-    --accent-on-light: #FFFFFF;
-    --ok-bg-light: #D7F3C2;
-    --ok-ink-light: #217B44;
-    --warn-bg-light: #FFE8B3;
-    --warn-ink-light: #6B4400;
-    --danger-bg-light: #FAD0CE;
-    --danger-ink-light: #BE423F;
 
-    --bg-dark: #0F170B;
-    --surface-dark: #172212;
-    --surface-2-dark: #202E19;
-    --ink-dark: #F2F9ED;
-    --ink-2-dark: #B1C4A5;
-    --border-dark: #486338;
-    --border-soft-dark: #2C3D22;
-    --shadow-sm-dark: 0 3px 0 #070B05;
-    --accent-dark: #9BE12A;
-    --accent-on-dark: #1A260E;
-    --ok-bg-dark: #1D3D24;
-    --ok-ink-dark: #9BE12A;
-    --warn-bg-dark: #403010;
-    --warn-ink-dark: #FFD066;
-    --danger-bg-dark: #451B1A;
-    --danger-ink-dark: #FF8A85;
-
-    --z-bg: var(--bg-light);
-    --z-surface: var(--surface-light);
-    --z-surface-2: var(--surface-2-light);
-    --z-ink: var(--ink-light);
-    --z-ink-2: var(--ink-2-light);
-    --z-border: var(--border-light);
-    --z-border-soft: var(--border-soft-light);
-    --z-shadow: var(--shadow-sm-light);
-    --z-accent: var(--accent-light);
-    --z-accent-on: var(--accent-on-light);
-    --z-ok-bg: var(--ok-bg-light);
-    --z-ok-ink: var(--ok-ink-light);
-    --z-warn-bg: var(--warn-bg-light);
-    --z-warn-ink: var(--warn-ink-light);
-    --z-danger-bg: var(--danger-bg-light);
-    --z-danger-ink: var(--danger-ink-light);
-
-    @media (prefers-color-scheme: dark) {
-      --z-bg: var(--bg-dark);
-      --z-surface: var(--surface-dark);
-      --z-surface-2: var(--surface-2-dark);
-      --z-ink: var(--ink-dark);
-      --z-ink-2: var(--ink-2-dark);
-      --z-border: var(--border-dark);
-      --z-border-soft: var(--border-soft-dark);
-      --z-shadow: var(--shadow-sm-dark);
-      --z-accent: var(--accent-dark);
-      --z-accent-on: var(--accent-on-dark);
-      --z-ok-bg: var(--ok-bg-dark);
-      --z-ok-ink: var(--ok-ink-dark);
-      --z-warn-bg: var(--warn-bg-dark);
-      --z-warn-ink: var(--warn-ink-dark);
-      --z-danger-bg: var(--danger-bg-dark);
-      --z-danger-ink: var(--danger-ink-dark);
-    }
-
-    @supports (color: light-dark(white, black)) {
-      --z-bg: light-dark(var(--bg-light), var(--bg-dark));
-      --z-surface: light-dark(var(--surface-light), var(--surface-dark));
-      --z-surface-2: light-dark(var(--surface-2-light), var(--surface-2-dark));
-      --z-ink: light-dark(var(--ink-light), var(--ink-dark));
-      --z-ink-2: light-dark(var(--ink-2-light), var(--ink-2-dark));
-      --z-border: light-dark(var(--border-light), var(--border-dark));
-      --z-border-soft: light-dark(var(--border-soft-light), var(--border-soft-dark));
-      --z-accent: light-dark(var(--accent-light), var(--accent-dark));
-      --z-accent-on: light-dark(var(--accent-on-light), var(--accent-on-dark));
-      --z-ok-bg: light-dark(var(--ok-bg-light), var(--ok-bg-dark));
-      --z-ok-ink: light-dark(var(--ok-ink-light), var(--ok-ink-dark));
-      --z-warn-bg: light-dark(var(--warn-bg-light), var(--warn-bg-dark));
-      --z-warn-ink: light-dark(var(--warn-ink-light), var(--warn-ink-dark));
-      --z-danger-bg: light-dark(var(--danger-bg-light), var(--danger-bg-dark));
-      --z-danger-ink: light-dark(var(--danger-ink-light), var(--danger-ink-dark));
-    }
+    /* Native Home Assistant theme variables */
+    --z-bg: var(--primary-background-color, #fafafa);
+    --z-surface: var(--ha-card-background, var(--card-background-color, #ffffff));
+    --z-surface-2: var(--secondary-background-color, rgba(127, 127, 127, 0.08));
+    --z-ink: var(--primary-text-color, #212121);
+    --z-ink-2: var(--secondary-text-color, #727272);
+    --z-border: var(--ha-card-border-color, var(--divider-color, rgba(127, 127, 127, 0.25)));
+    --z-border-soft: var(--divider-color, rgba(127, 127, 127, 0.18));
+    --z-radius: var(--ha-card-border-radius, 12px);
+    --z-shadow: var(--ha-card-box-shadow, 0 2px 6px rgba(0, 0, 0, 0.06));
+    --z-accent: var(--primary-color, #03a9f4);
+    --z-accent-on: var(--text-primary-color, #ffffff);
+    --z-ok-bg: color-mix(in srgb, var(--success-color, #43a047) 16%, transparent);
+    --z-ok-ink: var(--success-color, #2e7d32);
+    --z-warn-bg: color-mix(in srgb, var(--warning-color, #ffa600) 18%, transparent);
+    --z-warn-ink: var(--warning-color, #d97706);
+    --z-danger-bg: color-mix(in srgb, var(--error-color, #db4437) 16%, transparent);
+    --z-danger-ink: var(--error-color, #db4437);
 
     background: var(--z-bg);
     color: var(--z-ink);
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: var(--paper-font-body1_-_font-family, Roboto, system-ui, -apple-system, sans-serif);
   }
 
   .topbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 22px;
-    background: var(--z-surface);
-    border-bottom: 2px solid var(--z-border);
+    padding: 12px 20px;
+    background: var(--app-header-background-color, var(--z-surface));
+    color: var(--app-header-text-color, var(--z-ink));
+    border-bottom: 1px solid var(--z-border-soft);
     gap: 12px;
     flex-wrap: wrap;
   }
@@ -211,8 +144,8 @@ PANEL_SHEET.replaceSync(`
 
   .panel-card {
     background: var(--z-surface);
-    border: 2px solid var(--z-border);
-    border-radius: 16px;
+    border: var(--ha-card-border-width, 1px) solid var(--z-border);
+    border-radius: var(--z-radius);
     box-shadow: var(--z-shadow);
     padding: 18px;
     display: flex;
@@ -393,6 +326,17 @@ PANEL_SHEET.replaceSync(`
     font-variant-numeric: tabular-nums;
   }
 
+  .slider-hint {
+    font-size: 0.74rem;
+    font-weight: 400;
+    color: var(--z-ink-2);
+    line-height: 1.3;
+  }
+
+  .slider-row[hidden] {
+    display: none;
+  }
+
   .slider-row input[type="range"] {
     width: 100%;
     accent-color: var(--z-accent);
@@ -408,12 +352,11 @@ PANEL_SHEET.replaceSync(`
 
   button.zest-btn {
     appearance: none;
-    border: 2px solid var(--z-border);
-    border-radius: 10px;
-    box-shadow: var(--z-shadow);
-    padding: 10px 16px;
+    border: 1px solid var(--z-border);
+    border-radius: 8px;
+    padding: 9px 16px;
     font-size: 0.86rem;
-    font-weight: 800;
+    font-weight: 600;
     cursor: pointer;
     background: var(--z-accent);
     color: var(--z-accent-on);
@@ -450,6 +393,60 @@ PANEL_SHEET.replaceSync(`
 
   .full-width {
     grid-column: 1 / -1;
+  }
+
+  dialog.purge-dialog {
+    background: var(--z-surface);
+    color: var(--z-ink);
+    border: 1px solid var(--z-border);
+    border-radius: var(--z-radius);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+    padding: 20px;
+    max-width: 400px;
+    width: calc(100% - 32px);
+  }
+
+  dialog.purge-dialog:modal {
+    overscroll-behavior: contain;
+  }
+
+  dialog.purge-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.55);
+    overflow: hidden;
+    overscroll-behavior: contain;
+  }
+
+  dialog.purge-dialog h3 {
+    margin: 0 0 8px;
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+
+  dialog.purge-dialog p {
+    margin: 0 0 14px;
+    font-size: 0.86rem;
+    color: var(--z-ink-2);
+    line-height: 1.45;
+  }
+
+  .preset-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  button.zest-btn.danger {
+    background: var(--z-danger-ink);
+    color: #ffffff;
+    border-color: var(--z-danger-ink);
   }
 `);
 
@@ -526,43 +523,47 @@ PANEL_TEMPLATE.innerHTML = `
       </div>
 
       <div class="control-row">
-        <label for="ctrl-mode">Check Schedule Mode</label>
+        <label for="ctrl-mode">When to Check Your Print</label>
         <select id="ctrl-mode">
-          <option value="both">Both (Layers &amp; Minutes)</option>
-          <option value="layers">Every X Layers</option>
-          <option value="minutes">Every X Minutes</option>
+          <option value="both">Layers or Time (Recommended)</option>
+          <option value="layers">By Layer Count Only</option>
+          <option value="minutes">By Time Interval Only</option>
         </select>
       </div>
 
       <div class="slider-row">
         <div class="slider-head">
-          <label for="ctrl-l1">Layer 1 Multi-Checks</label>
+          <label for="ctrl-l1">Extra Checks on Layer 1</label>
           <span class="slider-badge" id="val-ctrl-l1">3 checks</span>
         </div>
+        <div class="slider-hint">Catches peeling or bad bed adhesion early while Layer 1 is still printing.</div>
         <input type="range" id="ctrl-l1" min="0" max="5" step="1" value="3" />
       </div>
 
-      <div class="slider-row">
+      <div class="slider-row" id="row-ctrl-layers">
         <div class="slider-head">
-          <label for="ctrl-layers">Every X Layers</label>
+          <label for="ctrl-layers">Check Every… (Layers)</label>
           <span class="slider-badge" id="val-ctrl-layers">10 layers</span>
         </div>
+        <div class="slider-hint">Inspects your print every time this many layers finish.</div>
         <input type="range" id="ctrl-layers" min="1" max="50" step="1" value="10" />
       </div>
 
-      <div class="slider-row">
+      <div class="slider-row" id="row-ctrl-mins">
         <div class="slider-head">
-          <label for="ctrl-mins">Every X Minutes</label>
+          <label for="ctrl-mins">Check Every… (Minutes)</label>
           <span class="slider-badge" id="val-ctrl-mins">5 min</span>
         </div>
+        <div class="slider-hint">Inspects if this many minutes pass during a slow, large layer.</div>
         <input type="range" id="ctrl-mins" min="1" max="60" step="1" value="5" />
       </div>
 
       <div class="slider-row">
         <div class="slider-head">
-          <label for="ctrl-thresh">Auto-Pause Threshold</label>
+          <label for="ctrl-thresh">Auto-Pause Confidence</label>
           <span class="slider-badge" id="val-ctrl-thresh">80%</span>
         </div>
+        <div class="slider-hint">80% recommended. Lower pauses earlier; higher pauses only on obvious failures.</div>
         <input type="range" id="ctrl-thresh" min="50" max="95" step="5" value="80" />
       </div>
     </div>
@@ -570,14 +571,30 @@ PANEL_TEMPLATE.innerHTML = `
     <div class="panel-card full-width">
       <h2 class="card-title">
         <span id="history-title">Lifetime Print History (0 prints)</span>
-        <div class="actions-row">
-          <input type="number" id="ctrl-keep" min="0" max="1000" step="5" style="width:76px;padding:6px 8px;border-radius:8px;border:2px solid var(--z-border);background:var(--z-surface-2);color:var(--z-ink);font-weight:800;" title="Keep last X prints" />
-          <button type="button" class="zest-btn secondary" id="btn-purge">Purge Old (&gt; X)</button>
-        </div>
+        <button type="button" class="zest-btn secondary" id="btn-open-purge">Purge History…</button>
       </h2>
       <div class="history-table" id="history-table"></div>
     </div>
   </div>
+
+  <dialog class="purge-dialog" id="purge-dialog" closedby="any" aria-labelledby="purge-dialog-title">
+    <h3 id="purge-dialog-title">Purge Print History</h3>
+    <p>Choose how many recent prints to keep. All older print logs and snapshots will be permanently deleted.</p>
+    <div class="preset-row">
+      <button type="button" class="zest-btn secondary" data-preset="50">Keep 50</button>
+      <button type="button" class="zest-btn secondary" data-preset="20">Keep 20</button>
+      <button type="button" class="zest-btn secondary" data-preset="10">Keep 10</button>
+      <button type="button" class="zest-btn secondary" data-preset="0">Delete All (0)</button>
+    </div>
+    <div class="control-row">
+      <label for="ctrl-keep">Keep last X prints</label>
+      <input type="number" id="ctrl-keep" min="0" max="1000" step="1" value="50" style="width:84px;" />
+    </div>
+    <form method="dialog" class="dialog-actions">
+      <button value="cancel" class="zest-btn secondary" autofocus>Cancel</button>
+      <button value="confirm" class="zest-btn danger">Confirm Purge</button>
+    </form>
+  </dialog>
 `;
 
 class BambuAIGuardPanel extends HTMLElement {
@@ -613,9 +630,21 @@ class BambuAIGuardPanel extends HTMLElement {
       sr.getElementById("btn-inspect").addEventListener("click", () => {
         if (this.#hass) this.#hass.callService("bambu_ai_guard", "inspect_now", {});
       });
-      sr.getElementById("btn-purge").addEventListener("click", () => {
-        const keepVal = Number(sr.getElementById("ctrl-keep").value || 50);
-        if (this.#hass) {
+      const purgeDialog = sr.getElementById("purge-dialog");
+      const keepInput = sr.getElementById("ctrl-keep");
+      sr.getElementById("btn-open-purge").addEventListener("click", () => {
+        purgeDialog.showModal();
+      });
+      sr.querySelectorAll("[data-preset]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          keepInput.value = btn.getAttribute("data-preset");
+        });
+      });
+      purgeDialog.addEventListener("close", () => {
+        const outcome = purgeDialog.returnValue;
+        purgeDialog.returnValue = "";
+        if (outcome === "confirm" && this.#hass) {
+          const keepVal = Math.max(0, Math.round(Number(keepInput.value || 0)));
           this.#hass.callService("bambu_ai_guard", "purge_history", {
             keep_last_prints: keepVal,
           });
@@ -628,10 +657,13 @@ class BambuAIGuardPanel extends HTMLElement {
         this.#toggleSwitch(this.#entityMap.median, e.target.checked);
       });
       sr.getElementById("ctrl-mode").addEventListener("change", (e) => {
+        const modeVal = e.target.value;
+        sr.getElementById("row-ctrl-layers").hidden = modeVal === "minutes";
+        sr.getElementById("row-ctrl-mins").hidden = modeVal === "layers";
         if (this.#hass && this.#entityMap.mode) {
           this.#hass.callService("select", "select_option", {
             entity_id: this.#entityMap.mode,
-            option: e.target.value,
+            option: modeVal,
           });
         }
       });
@@ -774,6 +806,9 @@ class BambuAIGuardPanel extends HTMLElement {
     syncCheck("ctrl-autopause", "autoPause");
     syncCheck("ctrl-median", "median");
     syncVal("ctrl-mode", "mode", false);
+    const activeMode = sr.getElementById("ctrl-mode").value;
+    sr.getElementById("row-ctrl-layers").hidden = activeMode === "minutes";
+    sr.getElementById("row-ctrl-mins").hidden = activeMode === "layers";
     syncVal("ctrl-l1", "l1", true);
     syncVal("ctrl-layers", "layers", true);
     syncVal("ctrl-mins", "mins", true);
@@ -784,9 +819,7 @@ class BambuAIGuardPanel extends HTMLElement {
     if (histObj) {
       const ha = histObj.attributes || {};
       const total = ha.total_prints_recorded ?? histObj.state ?? 0;
-      const keepSetting = ha.purge_keep_prints_setting ?? 50;
       sr.getElementById("history-title").textContent = `Lifetime Print History (${total} prints)`;
-      sr.getElementById("btn-purge").textContent = `Purge Old (> ${keepSetting})`;
 
       const table = sr.getElementById("history-table");
       const prints = Array.isArray(ha.recent_prints) ? ha.recent_prints : [];

@@ -11,96 +11,24 @@ ZEST_SHEET.replaceSync(`
     display: block;
     color-scheme: light dark;
 
-    /* Zest Light tokens */
-    --bg-light: #F2F9ED;
-    --surface-light: #FDFFFB;
-    --surface-2-light: #E7F2DF;
-    --ink-light: #1A260E;
-    --ink-2-light: #586251;
-    --border-light: #1A260E;
-    --border-soft-light: #D8E0D1;
-    --shadow-sm-light: 0 2px 0 #1A260E;
-    --accent-light: #538900;
-    --accent-on-light: #FFFFFF;
-    --ok-bg-light: #D7F3C2;
-    --ok-ink-light: #217B44;
-    --warn-bg-light: #FFE8B3;
-    --warn-ink-light: #6B4400;
-    --danger-bg-light: #FAD0CE;
-    --danger-ink-light: #BE423F;
-
-    /* Zest Dark tokens */
-    --bg-dark: #0F170B;
-    --surface-dark: #172212;
-    --surface-2-dark: #202E19;
-    --ink-dark: #F2F9ED;
-    --ink-2-dark: #B1C4A5;
-    --border-dark: #486338;
-    --border-soft-dark: #2C3D22;
-    --shadow-sm-dark: 0 2px 0 #070B05;
-    --accent-dark: #9BE12A;
-    --accent-on-dark: #1A260E;
-    --ok-bg-dark: #1D3D24;
-    --ok-ink-dark: #9BE12A;
-    --warn-bg-dark: #403010;
-    --warn-ink-dark: #FFD066;
-    --danger-bg-dark: #451B1A;
-    --danger-ink-dark: #FF8A85;
-
-    /* Default fallback tokens */
-    --z-bg: var(--bg-light);
-    --z-surface: var(--surface-light);
-    --z-surface-2: var(--surface-2-light);
-    --z-ink: var(--ink-light);
-    --z-ink-2: var(--ink-2-light);
-    --z-border: var(--border-light);
-    --z-border-soft: var(--border-soft-light);
-    --z-shadow: var(--shadow-sm-light);
-    --z-accent: var(--accent-light);
-    --z-accent-on: var(--accent-on-light);
-    --z-ok-bg: var(--ok-bg-light);
-    --z-ok-ink: var(--ok-ink-light);
-    --z-warn-bg: var(--warn-bg-light);
-    --z-warn-ink: var(--warn-ink-light);
-    --z-danger-bg: var(--danger-bg-light);
-    --z-danger-ink: var(--danger-ink-light);
-
-    @media (prefers-color-scheme: dark) {
-      --z-bg: var(--bg-dark);
-      --z-surface: var(--surface-dark);
-      --z-surface-2: var(--surface-2-dark);
-      --z-ink: var(--ink-dark);
-      --z-ink-2: var(--ink-2-dark);
-      --z-border: var(--border-dark);
-      --z-border-soft: var(--border-soft-dark);
-      --z-shadow: var(--shadow-sm-dark);
-      --z-accent: var(--accent-dark);
-      --z-accent-on: var(--accent-on-dark);
-      --z-ok-bg: var(--ok-bg-dark);
-      --z-ok-ink: var(--ok-ink-dark);
-      --z-warn-bg: var(--warn-bg-dark);
-      --z-warn-ink: var(--warn-ink-dark);
-      --z-danger-bg: var(--danger-bg-dark);
-      --z-danger-ink: var(--danger-ink-dark);
-    }
-
-    @supports (color: light-dark(white, black)) {
-      --z-bg: light-dark(var(--bg-light), var(--bg-dark));
-      --z-surface: light-dark(var(--surface-light), var(--surface-dark));
-      --z-surface-2: light-dark(var(--surface-2-light), var(--surface-2-dark));
-      --z-ink: light-dark(var(--ink-light), var(--ink-dark));
-      --z-ink-2: light-dark(var(--ink-2-light), var(--ink-2-dark));
-      --z-border: light-dark(var(--border-light), var(--border-dark));
-      --z-border-soft: light-dark(var(--border-soft-light), var(--border-soft-dark));
-      --z-accent: light-dark(var(--accent-light), var(--accent-dark));
-      --z-accent-on: light-dark(var(--accent-on-light), var(--accent-on-dark));
-      --z-ok-bg: light-dark(var(--ok-bg-light), var(--ok-bg-dark));
-      --z-ok-ink: light-dark(var(--ok-ink-light), var(--ok-ink-dark));
-      --z-warn-bg: light-dark(var(--warn-bg-light), var(--warn-bg-dark));
-      --z-warn-ink: light-dark(var(--warn-ink-light), var(--warn-ink-dark));
-      --z-danger-bg: light-dark(var(--danger-bg-light), var(--danger-bg-dark));
-      --z-danger-ink: light-dark(var(--danger-ink-light), var(--danger-ink-dark));
-    }
+    /* Native Home Assistant theme variables */
+    --z-bg: var(--primary-background-color, #fafafa);
+    --z-surface: var(--ha-card-background, var(--card-background-color, #ffffff));
+    --z-surface-2: var(--secondary-background-color, rgba(127, 127, 127, 0.08));
+    --z-ink: var(--primary-text-color, #212121);
+    --z-ink-2: var(--secondary-text-color, #727272);
+    --z-border: var(--ha-card-border-color, var(--divider-color, rgba(127, 127, 127, 0.25)));
+    --z-border-soft: var(--divider-color, rgba(127, 127, 127, 0.18));
+    --z-radius: var(--ha-card-border-radius, 12px);
+    --z-shadow: var(--ha-card-box-shadow, none);
+    --z-accent: var(--primary-color, #03a9f4);
+    --z-accent-on: var(--text-primary-color, #ffffff);
+    --z-ok-bg: color-mix(in srgb, var(--success-color, #43a047) 16%, transparent);
+    --z-ok-ink: var(--success-color, #2e7d32);
+    --z-warn-bg: color-mix(in srgb, var(--warning-color, #ffa600) 18%, transparent);
+    --z-warn-ink: var(--warning-color, #d97706);
+    --z-danger-bg: color-mix(in srgb, var(--error-color, #db4437) 16%, transparent);
+    --z-danger-ink: var(--error-color, #db4437);
   }
 
   :host([hidden]) {
@@ -110,11 +38,11 @@ ZEST_SHEET.replaceSync(`
   .zest-card {
     background: var(--z-surface);
     color: var(--z-ink);
-    border: 2px solid var(--z-border);
-    border-radius: 16px;
+    border: var(--ha-card-border-width, 1px) solid var(--z-border);
+    border-radius: var(--z-radius);
     box-shadow: var(--z-shadow);
     padding: 16px;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: var(--paper-font-body1_-_font-family, Roboto, system-ui, -apple-system, sans-serif);
     display: flex;
     flex-direction: column;
     gap: 14px;

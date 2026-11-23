@@ -1,0 +1,14 @@
+{
+  "domain": "bambu_ai_guard",
+  "name": "Bambu AI Guard",
+  "after_dependencies": ["bambu_lab", "camera"],
+  "codeowners": ["@bibouinc"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/bibouinc/bambu-ai-guard",
+  "integration_type": "device",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/bibouinc/bambu-ai-guard/issues",
+  "requirements": [],
+  "version": "1.2.0"
+}

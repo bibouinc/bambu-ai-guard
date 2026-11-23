@@ -1,0 +1,40 @@
+inspect_now:
+  name: Inspect print now
+  description: Capture a live camera snapshot (or 3-frame temporal median on CoreXY printers) and run an immediate Gemini Decisions API spaghetti, warping, and detachment check.
+  fields:
+    entry_id:
+      name: Config Entry ID
+      description: Optional config entry ID if multiple Bambu printers are guarded.
+      required: false
+      selector:
+        text:
+
+purge_history:
+  name: Purge print history
+  description: Manually purge print history records and snapshots older than the last X prints (or older than Y days).
+  fields:
+    keep_last_prints:
+      name: Keep last X prints
+      description: Number of most recent print records to keep (set 0 to delete all).
+      required: false
+      default: 50
+      selector:
+        number:
+          min: 0
+          max: 1000
+          step: 1
+    older_than_days:
+      name: Older than Y days
+      description: Optional age filter in days (delete prints older than Y days).
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 3650
+          step: 1
+    entry_id:
+      name: Config Entry ID
+      description: Optional config entry ID if multiple Bambu printers are guarded.
+      required: false
+      selector:
+        text:

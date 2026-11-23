@@ -1,0 +1,146 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Настройка Bambu AI Guard",
+        "description": "Выберите принтер Bambu Lab (P1P, P1S, A1, A1 Mini, X1C) и вставьте API-ключ Google Gemini.",
+        "data": {
+          "printer_device_id": "Принтер Bambu Lab",
+          "printer_model": "Модель принтера",
+          "printer_ip": "Printer LAN IP Address",
+          "access_code": "Printer LAN Access Code (8 chars)",
+          "printer_serial": "Printer Serial Number (Optional)",
+          "gemini_api_key": "API-ключ Google Gemini"
+        }
+      }
+    },
+    "error": {
+      "missing_api_key": "Введите действительный API-ключ Gemini.",
+      "invalid_api_key": "Недействительный API-ключ Gemini.",
+      "cannot_connect": "Не удалось подключиться к Google Gemini API.",
+      "missing_printer_connection": "Please provide your printer LAN IP and Access Code."
+    },
+    "abort": {
+      "already_configured": "Этот принтер Bambu Lab уже защищен Bambu AI Guard."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Параметры Bambu AI Guard",
+        "data": {
+          "gemini_api_key": "Основной API-ключ Gemini",
+          "check_mode": "Inspection Frequency Mode",
+          "first_layer_checks": "First-Layer Checks (Layer 1)",
+          "check_interval_layers": "Проверять каждые N слоев (помимо критических слоев 2, 3, 5, 25)",
+          "check_interval_minutes": "AI Minute Check Interval (min)",
+          "auto_pause": "Автоматически ставить печать на паузу при критическом дефекте",
+          "auto_pause_threshold": "Порог уверенности для авто-паузы (%)",
+          "use_median_filter": "3-кадровый медианный фильтр сопла (CoreXY: P1P/P1S/X1C)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "defect_detected": {
+        "name": "Обнаружен дефект печати"
+      },
+      "spaghetti_detected": {
+        "name": "Обнаружены спагетти"
+      },
+      "warping_detected": {
+        "name": "Обнаружено коробление (warping)"
+      },
+      "detachment_detected": {
+        "name": "Обнаружен отрыв детали"
+      },
+      "first_layer_defect": {
+        "name": "Дефект первого слоя"
+      },
+      "any_failure_detected": {
+        "name": "Обнаружен критический сбой печати"
+      }
+    },
+    "sensor": {
+      "ai_status": {
+        "name": "Статус AI Guard"
+      },
+      "ai_confidence": {
+        "name": "Уверенность ИИ"
+      },
+      "spaghetti_probability": {
+        "name": "Вероятность спагетти"
+      },
+      "warping_probability": {
+        "name": "Вероятность коробления"
+      },
+      "api_latency": {
+        "name": "Задержка API ИИ"
+      },
+      "print_history": {
+        "name": "AI Print History"
+      }
+    },
+    "camera": {
+      "ai_composite_camera": {
+        "name": "Композитный снимок AI Guard"
+      }
+    },
+    "switch": {
+      "auto_pause": {
+        "name": "Авто-пауза ИИ при сбое"
+      },
+      "median_filter": {
+        "name": "3-кадровый фильтр удаления сопла"
+      }
+    },
+    "number": {
+      "auto_pause_threshold": {
+        "name": "Порог авто-паузы ИИ"
+      },
+      "first_layer_checks": {
+        "name": "AI First-Layer Checks (Layer 1)"
+      },
+      "check_interval_layers": {
+        "name": "Интервал проверки слоев ИИ"
+      },
+      "check_interval_minutes": {
+        "name": "AI Minute Check Interval"
+      },
+      "purge_keep_prints": {
+        "name": "Purge: Keep Last X Prints"
+      }
+    },
+    "select": {
+      "check_mode": {
+        "name": "AI Check Schedule Mode",
+        "state": {
+          "layers": "Every X Layers",
+          "minutes": "Every X Minutes",
+          "both": "Both (Layers & Minutes)"
+        }
+      }
+    },
+    "button": {
+      "inspect_now": {
+        "name": "Проверить сейчас (ИИ)"
+      },
+      "purge_history": {
+        "name": "Purge Old Print History (> X)"
+      }
+    }
+  },
+  "services": {
+    "inspect_now": {
+      "name": "Проверить печать сейчас",
+      "description": "Сделать снимок с камеры и запустить немедленную проверку Gemini ИИ.",
+      "fields": {
+        "entry_id": {
+          "name": "ID конфигурации",
+          "description": "Необязательный ID при наличии нескольких принтеров."
+        }
+      }
+    }
+  }
+}

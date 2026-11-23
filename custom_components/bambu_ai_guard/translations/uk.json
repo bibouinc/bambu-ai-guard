@@ -1,0 +1,146 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Налаштування Bambu AI Guard",
+        "description": "Оберіть принтер Bambu Lab (P1P, P1S, A1, A1 Mini, X1C) та вставте API-ключ Google Gemini.",
+        "data": {
+          "printer_device_id": "Принтер Bambu Lab",
+          "printer_model": "Модель принтера",
+          "printer_ip": "Printer LAN IP Address",
+          "access_code": "Printer LAN Access Code (8 chars)",
+          "printer_serial": "Printer Serial Number (Optional)",
+          "gemini_api_key": "API-ключ Google Gemini"
+        }
+      }
+    },
+    "error": {
+      "missing_api_key": "Введіть дійсний API-ключ Gemini.",
+      "invalid_api_key": "Недійсний API-ключ Gemini.",
+      "cannot_connect": "Не вдалося підключитися до Google Gemini API.",
+      "missing_printer_connection": "Please provide your printer LAN IP and Access Code."
+    },
+    "abort": {
+      "already_configured": "Цей принтер Bambu Lab вже захищено Bambu AI Guard."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Параметри Bambu AI Guard",
+        "data": {
+          "gemini_api_key": "Основний API-ключ Gemini",
+          "check_mode": "Inspection Frequency Mode",
+          "first_layer_checks": "First-Layer Checks (Layer 1)",
+          "check_interval_layers": "Перевіряти кожні N шарів (крім критичних шарів 2, 3, 5, 25)",
+          "check_interval_minutes": "AI Minute Check Interval (min)",
+          "auto_pause": "Автоматично ставити друк на паузу при критичному дефекті",
+          "auto_pause_threshold": "Поріг впевненості для авто-паузи (%)",
+          "use_median_filter": "3-кадровий медіанний фільтр сопла (CoreXY: P1P/P1S/X1C)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "defect_detected": {
+        "name": "Виявлено дефект друку"
+      },
+      "spaghetti_detected": {
+        "name": "Виявлено спагеті"
+      },
+      "warping_detected": {
+        "name": "Виявлено деформацію (warping)"
+      },
+      "detachment_detected": {
+        "name": "Виявлено відрив деталі"
+      },
+      "first_layer_defect": {
+        "name": "Дефект першого шару"
+      },
+      "any_failure_detected": {
+        "name": "Виявлено критичний збій друку"
+      }
+    },
+    "sensor": {
+      "ai_status": {
+        "name": "Статус AI Guard"
+      },
+      "ai_confidence": {
+        "name": "Впевненість ШІ"
+      },
+      "spaghetti_probability": {
+        "name": "Ймовірність спагеті"
+      },
+      "warping_probability": {
+        "name": "Ймовірність деформації"
+      },
+      "api_latency": {
+        "name": "Затримка API ШІ"
+      },
+      "print_history": {
+        "name": "AI Print History"
+      }
+    },
+    "camera": {
+      "ai_composite_camera": {
+        "name": "Композитний знімок AI Guard"
+      }
+    },
+    "switch": {
+      "auto_pause": {
+        "name": "Авто-пауза ШІ при збої"
+      },
+      "median_filter": {
+        "name": "3-кадровий фільтр сопла"
+      }
+    },
+    "number": {
+      "auto_pause_threshold": {
+        "name": "Поріг авто-паузи ШІ"
+      },
+      "first_layer_checks": {
+        "name": "AI First-Layer Checks (Layer 1)"
+      },
+      "check_interval_layers": {
+        "name": "Інтервал перевірки шарів ШІ"
+      },
+      "check_interval_minutes": {
+        "name": "AI Minute Check Interval"
+      },
+      "purge_keep_prints": {
+        "name": "Purge: Keep Last X Prints"
+      }
+    },
+    "select": {
+      "check_mode": {
+        "name": "AI Check Schedule Mode",
+        "state": {
+          "layers": "Every X Layers",
+          "minutes": "Every X Minutes",
+          "both": "Both (Layers & Minutes)"
+        }
+      }
+    },
+    "button": {
+      "inspect_now": {
+        "name": "Перевірити зараз (ШІ)"
+      },
+      "purge_history": {
+        "name": "Purge Old Print History (> X)"
+      }
+    }
+  },
+  "services": {
+    "inspect_now": {
+      "name": "Перевірити друк зараз",
+      "description": "Зробити знімок з камери та запустити негайну перевірку Gemini ШІ.",
+      "fields": {
+        "entry_id": {
+          "name": "ID конфігурації",
+          "description": "Необов'язковий ID за наявності декількох принтерів."
+        }
+      }
+    }
+  }
+}

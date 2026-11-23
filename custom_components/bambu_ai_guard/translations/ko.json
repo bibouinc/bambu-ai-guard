@@ -1,0 +1,146 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Bambu AI Guard 설정",
+        "description": "Bambu Lab 프린터(P1P, P1S, A1, A1 Mini, X1C)를 선택하고 Google Gemini API 키를 입력하세요.",
+        "data": {
+          "printer_device_id": "Bambu Lab 프린터",
+          "printer_model": "프린터 모델",
+          "printer_ip": "Printer LAN IP Address",
+          "access_code": "Printer LAN Access Code (8 chars)",
+          "printer_serial": "Printer Serial Number (Optional)",
+          "gemini_api_key": "Google Gemini API 키"
+        }
+      }
+    },
+    "error": {
+      "missing_api_key": "유효한 Gemini API 키를 입력하세요.",
+      "invalid_api_key": "잘못된 Gemini API 키입니다.",
+      "cannot_connect": "Google Gemini API에 연결할 수 없습니다.",
+      "missing_printer_connection": "Please provide your printer LAN IP and Access Code."
+    },
+    "abort": {
+      "already_configured": "이 Bambu Lab 프린터는 이미 Bambu AI Guard로 보호되고 있습니다."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Bambu AI Guard 옵션",
+        "data": {
+          "gemini_api_key": "기본 Gemini API 키",
+          "check_mode": "Inspection Frequency Mode",
+          "first_layer_checks": "First-Layer Checks (Layer 1)",
+          "check_interval_layers": "N개 레이어마다 검사 (중요 레이어 2, 3, 5, 25 외 추가)",
+          "check_interval_minutes": "AI Minute Check Interval (min)",
+          "auto_pause": "심각한 출력 결함 감지 시 자동으로 일시중지",
+          "auto_pause_threshold": "자동 일시중지 신뢰도 임계값 (%)",
+          "use_median_filter": "3프레임 노즐 제거 중앙값 필터 (CoreXY: P1P/P1S/X1C)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "defect_detected": {
+        "name": "출력 결함 감지됨"
+      },
+      "spaghetti_detected": {
+        "name": "스파게티 감지됨"
+      },
+      "warping_detected": {
+        "name": "수축/들뜸(Warping) 감지됨"
+      },
+      "detachment_detected": {
+        "name": "출력물 이탈 감지됨"
+      },
+      "first_layer_defect": {
+        "name": "첫 레이어 불량"
+      },
+      "any_failure_detected": {
+        "name": "치명적 출력 실패 감지됨"
+      }
+    },
+    "sensor": {
+      "ai_status": {
+        "name": "AI Guard 상태"
+      },
+      "ai_confidence": {
+        "name": "AI 신뢰도"
+      },
+      "spaghetti_probability": {
+        "name": "스파게티 확률"
+      },
+      "warping_probability": {
+        "name": "수축/들뜸 확률"
+      },
+      "api_latency": {
+        "name": "AI API 지연 시간"
+      },
+      "print_history": {
+        "name": "AI Print History"
+      }
+    },
+    "camera": {
+      "ai_composite_camera": {
+        "name": "AI Guard 합성 스냅샷"
+      }
+    },
+    "switch": {
+      "auto_pause": {
+        "name": "실패 시 AI 자동 일시중지"
+      },
+      "median_filter": {
+        "name": "3프레임 노즐 제거 필터"
+      }
+    },
+    "number": {
+      "auto_pause_threshold": {
+        "name": "AI 자동 일시중지 임계값"
+      },
+      "first_layer_checks": {
+        "name": "AI First-Layer Checks (Layer 1)"
+      },
+      "check_interval_layers": {
+        "name": "AI 레이어 검사 간격"
+      },
+      "check_interval_minutes": {
+        "name": "AI Minute Check Interval"
+      },
+      "purge_keep_prints": {
+        "name": "Purge: Keep Last X Prints"
+      }
+    },
+    "select": {
+      "check_mode": {
+        "name": "AI Check Schedule Mode",
+        "state": {
+          "layers": "Every X Layers",
+          "minutes": "Every X Minutes",
+          "both": "Both (Layers & Minutes)"
+        }
+      }
+    },
+    "button": {
+      "inspect_now": {
+        "name": "지금 AI 검사 실행"
+      },
+      "purge_history": {
+        "name": "Purge Old Print History (> X)"
+      }
+    }
+  },
+  "services": {
+    "inspect_now": {
+      "name": "지금 출력물 검사",
+      "description": "카메라 스냅샷을 캡처하여 즉시 Gemini AI 스파게티, 들뜸 및 이탈 검사를 실행합니다.",
+      "fields": {
+        "entry_id": {
+          "name": "구성 항목 ID",
+          "description": "여러 프린터를 사용하는 경우 선택적 구성 ID입니다."
+        }
+      }
+    }
+  }
+}

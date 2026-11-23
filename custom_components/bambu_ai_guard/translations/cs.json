@@ -1,0 +1,146 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Nastavení Bambu AI Guard",
+        "description": "Vyberte tiskárnu Bambu Lab (P1P, P1S, A1, A1 Mini, X1C) a vložte API klíč Google Gemini.",
+        "data": {
+          "printer_device_id": "Tiskárna Bambu Lab",
+          "printer_model": "Model tiskárny",
+          "printer_ip": "Printer LAN IP Address",
+          "access_code": "Printer LAN Access Code (8 chars)",
+          "printer_serial": "Printer Serial Number (Optional)",
+          "gemini_api_key": "Google Gemini API klíč"
+        }
+      }
+    },
+    "error": {
+      "missing_api_key": "Zadejte platný Gemini API klíč.",
+      "invalid_api_key": "Neplatný Gemini API klíč.",
+      "cannot_connect": "Nelze se připojit k API Google Gemini.",
+      "missing_printer_connection": "Please provide your printer LAN IP and Access Code."
+    },
+    "abort": {
+      "already_configured": "Tato tiskárna Bambu Lab je již chráněna službou Bambu AI Guard."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Možnosti Bambu AI Guard",
+        "data": {
+          "gemini_api_key": "Hlavní Gemini API klíč",
+          "check_mode": "Inspection Frequency Mode",
+          "first_layer_checks": "First-Layer Checks (Layer 1)",
+          "check_interval_layers": "Kontrolovat každých N vrstev (kromě kritických vrstev 2, 3, 5, 25)",
+          "check_interval_minutes": "AI Minute Check Interval (min)",
+          "auto_pause": "Automaticky pozastavit tisk při kritické vadě",
+          "auto_pause_threshold": "Práh jistoty pro automatické pozastavení (%)",
+          "use_median_filter": "3-snímkový mediánový filtr trysky (CoreXY: P1P/P1S/X1C)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "defect_detected": {
+        "name": "Zjištěna vada tisku"
+      },
+      "spaghetti_detected": {
+        "name": "Zjištěny špagety"
+      },
+      "warping_detected": {
+        "name": "Zjištěno zvedání rohů (warping)"
+      },
+      "detachment_detected": {
+        "name": "Zjištěno odlepení výtisku"
+      },
+      "first_layer_defect": {
+        "name": "Vada první vrstvy"
+      },
+      "any_failure_detected": {
+        "name": "Zjištěno kritické selhání tisku"
+      }
+    },
+    "sensor": {
+      "ai_status": {
+        "name": "Stav AI Guard"
+      },
+      "ai_confidence": {
+        "name": "Jistota AI"
+      },
+      "spaghetti_probability": {
+        "name": "Pravděpodobnost špaget"
+      },
+      "warping_probability": {
+        "name": "Pravděpodobnost warpingu"
+      },
+      "api_latency": {
+        "name": "Odezva AI API"
+      },
+      "print_history": {
+        "name": "AI Print History"
+      }
+    },
+    "camera": {
+      "ai_composite_camera": {
+        "name": "Složený snímek AI Guard"
+      }
+    },
+    "switch": {
+      "auto_pause": {
+        "name": "AI Auto-pauza při selhání"
+      },
+      "median_filter": {
+        "name": "3-snímkový filtr trysky"
+      }
+    },
+    "number": {
+      "auto_pause_threshold": {
+        "name": "Práh AI Auto-pauzy"
+      },
+      "first_layer_checks": {
+        "name": "AI First-Layer Checks (Layer 1)"
+      },
+      "check_interval_layers": {
+        "name": "Interval kontroly vrstev AI"
+      },
+      "check_interval_minutes": {
+        "name": "AI Minute Check Interval"
+      },
+      "purge_keep_prints": {
+        "name": "Purge: Keep Last X Prints"
+      }
+    },
+    "select": {
+      "check_mode": {
+        "name": "AI Check Schedule Mode",
+        "state": {
+          "layers": "Every X Layers",
+          "minutes": "Every X Minutes",
+          "both": "Both (Layers & Minutes)"
+        }
+      }
+    },
+    "button": {
+      "inspect_now": {
+        "name": "Zkontrolovat nyní (AI)"
+      },
+      "purge_history": {
+        "name": "Purge Old Print History (> X)"
+      }
+    }
+  },
+  "services": {
+    "inspect_now": {
+      "name": "Zkontrolovat tisk nyní",
+      "description": "Pořídí snímek z kamery a spustí okamžitou kontrolu pomocí Gemini AI.",
+      "fields": {
+        "entry_id": {
+          "name": "ID konfigurace",
+          "description": "Volitelné ID konfigurace při více tiskárnách."
+        }
+      }
+    }
+  }
+}

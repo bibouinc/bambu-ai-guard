@@ -1,0 +1,146 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Bambu AI Guard Opsætning",
+        "description": "Vælg din Bambu Lab-printer (P1P, P1S, A1, A1 Mini, X1C) og indsæt din Google Gemini API-nøgle.",
+        "data": {
+          "printer_device_id": "Bambu Lab Printer",
+          "printer_model": "Printermodel",
+          "printer_ip": "Printer LAN IP Address",
+          "access_code": "Printer LAN Access Code (8 chars)",
+          "printer_serial": "Printer Serial Number (Optional)",
+          "gemini_api_key": "Google Gemini API-nøgle"
+        }
+      }
+    },
+    "error": {
+      "missing_api_key": "Indtast venligst en gyldig Gemini API-nøgle.",
+      "invalid_api_key": "Ugyldig Gemini API-nøgle.",
+      "cannot_connect": "Kunne ikke oprette forbindelse til Google Gemini API.",
+      "missing_printer_connection": "Please provide your printer LAN IP and Access Code."
+    },
+    "abort": {
+      "already_configured": "Denne Bambu Lab-printer overvåges allerede af Bambu AI Guard."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Bambu AI Guard Indstillinger",
+        "data": {
+          "gemini_api_key": "Primær Gemini API-nøgle",
+          "check_mode": "Inspection Frequency Mode",
+          "first_layer_checks": "First-Layer Checks (Layer 1)",
+          "check_interval_layers": "Undersøg hvert N. lag (udover kritiske lag 2, 3, 5, 25)",
+          "check_interval_minutes": "AI Minute Check Interval (min)",
+          "auto_pause": "Sæt automatisk print på pause ved kritisk fejl",
+          "auto_pause_threshold": "Grænseværdi for automatisk pause (%)",
+          "use_median_filter": "3-billeders median dysefilter (CoreXY: P1P/P1S/X1C)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "defect_detected": {
+        "name": "Printfejl registreret"
+      },
+      "spaghetti_detected": {
+        "name": "Spaghetti registreret"
+      },
+      "warping_detected": {
+        "name": "Warping registreret"
+      },
+      "detachment_detected": {
+        "name": "Emneløsning registreret"
+      },
+      "first_layer_defect": {
+        "name": "Førstelagsfejl"
+      },
+      "any_failure_detected": {
+        "name": "Kritisk printfejl registreret"
+      }
+    },
+    "sensor": {
+      "ai_status": {
+        "name": "AI Guard Status"
+      },
+      "ai_confidence": {
+        "name": "AI Sikkerhed"
+      },
+      "spaghetti_probability": {
+        "name": "Spaghetti-sandsynlighed"
+      },
+      "warping_probability": {
+        "name": "Warping-sandsynlighed"
+      },
+      "api_latency": {
+        "name": "AI API-latens"
+      },
+      "print_history": {
+        "name": "AI Print History"
+      }
+    },
+    "camera": {
+      "ai_composite_camera": {
+        "name": "AI Guard Sammensat Snapshot"
+      }
+    },
+    "switch": {
+      "auto_pause": {
+        "name": "AI Auto-Pause ved fejl"
+      },
+      "median_filter": {
+        "name": "3-billeders dysefilter"
+      }
+    },
+    "number": {
+      "auto_pause_threshold": {
+        "name": "AI Auto-Pause grænseværdi"
+      },
+      "first_layer_checks": {
+        "name": "AI First-Layer Checks (Layer 1)"
+      },
+      "check_interval_layers": {
+        "name": "AI Lag-kontrolinterval"
+      },
+      "check_interval_minutes": {
+        "name": "AI Minute Check Interval"
+      },
+      "purge_keep_prints": {
+        "name": "Purge: Keep Last X Prints"
+      }
+    },
+    "select": {
+      "check_mode": {
+        "name": "AI Check Schedule Mode",
+        "state": {
+          "layers": "Every X Layers",
+          "minutes": "Every X Minutes",
+          "both": "Both (Layers & Minutes)"
+        }
+      }
+    },
+    "button": {
+      "inspect_now": {
+        "name": "Undersøg nu (AI)"
+      },
+      "purge_history": {
+        "name": "Purge Old Print History (> X)"
+      }
+    }
+  },
+  "services": {
+    "inspect_now": {
+      "name": "Undersøg print nu",
+      "description": "Tag et kamerasnapshot og kør et øjeblikkeligt Gemini AI-tjek.",
+      "fields": {
+        "entry_id": {
+          "name": "Konfigurations-ID",
+          "description": "Valgfrit konfigurations-ID hvis flere printere overvåges."
+        }
+      }
+    }
+  }
+}

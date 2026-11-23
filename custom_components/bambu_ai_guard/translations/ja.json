@@ -1,0 +1,146 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Bambu AI Guard セットアップ",
+        "description": "Bambu Lab プリンター (P1P, P1S, A1, A1 Mini, X1C) を選択し、Google Gemini API キーを入力してください。",
+        "data": {
+          "printer_device_id": "Bambu Lab プリンター",
+          "printer_model": "プリンターモデル",
+          "printer_ip": "Printer LAN IP Address",
+          "access_code": "Printer LAN Access Code (8 chars)",
+          "printer_serial": "Printer Serial Number (Optional)",
+          "gemini_api_key": "Google Gemini API キー"
+        }
+      }
+    },
+    "error": {
+      "missing_api_key": "有効な Gemini API キーを入力してください。",
+      "invalid_api_key": "無効な Gemini API キーです。",
+      "cannot_connect": "Google Gemini API に接続できません。",
+      "missing_printer_connection": "Please provide your printer LAN IP and Access Code."
+    },
+    "abort": {
+      "already_configured": "この Bambu Lab プリンターは既に Bambu AI Guard で保護されています。"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Bambu AI Guard オプション",
+        "data": {
+          "gemini_api_key": "メイン Gemini API キー",
+          "check_mode": "Inspection Frequency Mode",
+          "first_layer_checks": "First-Layer Checks (Layer 1)",
+          "check_interval_layers": "N レイヤーごとに検査 (重要レイヤー 2, 3, 5, 25 に加えて)",
+          "check_interval_minutes": "AI Minute Check Interval (min)",
+          "auto_pause": "高確度の造形不良を検出した際に自動一時停止する",
+          "auto_pause_threshold": "自動一時停止の確信度しきい値 (%)",
+          "use_median_filter": "3フレーム時間中央値ノズル除去フィルター (CoreXY: P1P/P1S/X1C)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "defect_detected": {
+        "name": "プリント不良検出"
+      },
+      "spaghetti_detected": {
+        "name": "スパゲッティ検出"
+      },
+      "warping_detected": {
+        "name": "反り (Warping) 検出"
+      },
+      "detachment_detected": {
+        "name": "造形物の剥離検出"
+      },
+      "first_layer_defect": {
+        "name": "第1レイヤー不良"
+      },
+      "any_failure_detected": {
+        "name": "重大なプリント失敗検出"
+      }
+    },
+    "sensor": {
+      "ai_status": {
+        "name": "AI Guard ステータス"
+      },
+      "ai_confidence": {
+        "name": "AI 確信度"
+      },
+      "spaghetti_probability": {
+        "name": "スパゲッティ確率"
+      },
+      "warping_probability": {
+        "name": "反り確率"
+      },
+      "api_latency": {
+        "name": "AI API レイテンシ"
+      },
+      "print_history": {
+        "name": "AI Print History"
+      }
+    },
+    "camera": {
+      "ai_composite_camera": {
+        "name": "AI Guard 合成スナップショット"
+      }
+    },
+    "switch": {
+      "auto_pause": {
+        "name": "不良時 AI 自動一時停止"
+      },
+      "median_filter": {
+        "name": "3フレームノズル消去フィルター"
+      }
+    },
+    "number": {
+      "auto_pause_threshold": {
+        "name": "AI 自動一時停止しきい値"
+      },
+      "first_layer_checks": {
+        "name": "AI First-Layer Checks (Layer 1)"
+      },
+      "check_interval_layers": {
+        "name": "AI レイヤー検査間隔"
+      },
+      "check_interval_minutes": {
+        "name": "AI Minute Check Interval"
+      },
+      "purge_keep_prints": {
+        "name": "Purge: Keep Last X Prints"
+      }
+    },
+    "select": {
+      "check_mode": {
+        "name": "AI Check Schedule Mode",
+        "state": {
+          "layers": "Every X Layers",
+          "minutes": "Every X Minutes",
+          "both": "Both (Layers & Minutes)"
+        }
+      }
+    },
+    "button": {
+      "inspect_now": {
+        "name": "今すぐ AI 検査"
+      },
+      "purge_history": {
+        "name": "Purge Old Print History (> X)"
+      }
+    }
+  },
+  "services": {
+    "inspect_now": {
+      "name": "今すぐプリントを検査",
+      "description": "カメラのスナップショットを撮影し、Gemini AI でスパゲッティ・反り・剥離を即座に検査します。",
+      "fields": {
+        "entry_id": {
+          "name": "設定エントリー ID",
+          "description": "複数のプリンターを監視している場合の任意の ID。"
+        }
+      }
+    }
+  }
+}

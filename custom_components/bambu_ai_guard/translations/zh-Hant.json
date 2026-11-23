@@ -1,0 +1,146 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Bambu AI Guard 設定",
+        "description": "選擇您的 Bambu Lab 印表機 (P1P, P1S, A1, A1 Mini, X1C) 並貼上 Google Gemini API 金鑰。",
+        "data": {
+          "printer_device_id": "Bambu Lab 印表機",
+          "printer_model": "印表機型號",
+          "printer_ip": "Printer LAN IP Address",
+          "access_code": "Printer LAN Access Code (8 chars)",
+          "printer_serial": "Printer Serial Number (Optional)",
+          "gemini_api_key": "Google Gemini API 金鑰"
+        }
+      }
+    },
+    "error": {
+      "missing_api_key": "請輸入有效的 Gemini API 金鑰。",
+      "invalid_api_key": "Gemini API 金鑰無效。",
+      "cannot_connect": "無法連線至 Google Gemini API。",
+      "missing_printer_connection": "Please provide your printer LAN IP and Access Code."
+    },
+    "abort": {
+      "already_configured": "此 Bambu Lab 印表機已由 Bambu AI Guard 保護。"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Bambu AI Guard 選項",
+        "data": {
+          "gemini_api_key": "主要 Gemini API 金鑰",
+          "check_mode": "Inspection Frequency Mode",
+          "first_layer_checks": "First-Layer Checks (Layer 1)",
+          "check_interval_layers": "每 N 層檢查一次（除第 2、3、5、25 關鍵層外）",
+          "check_interval_minutes": "AI Minute Check Interval (min)",
+          "auto_pause": "偵測到高信心度缺陷時自動暫停列印",
+          "auto_pause_threshold": "自動暫停信心度閾值 (%)",
+          "use_median_filter": "3 幀時域中值去噴頭濾波 (CoreXY: P1P/P1S/X1C)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "defect_detected": {
+        "name": "偵測到列印缺陷"
+      },
+      "spaghetti_detected": {
+        "name": "偵測到炒麵 (Spaghetti)"
+      },
+      "warping_detected": {
+        "name": "偵測到翹邊 (Warping)"
+      },
+      "detachment_detected": {
+        "name": "偵測到物件脫落"
+      },
+      "first_layer_defect": {
+        "name": "首層附著缺陷"
+      },
+      "any_failure_detected": {
+        "name": "偵測到嚴重列印失敗"
+      }
+    },
+    "sensor": {
+      "ai_status": {
+        "name": "AI 守護狀態"
+      },
+      "ai_confidence": {
+        "name": "AI 信心度"
+      },
+      "spaghetti_probability": {
+        "name": "炒麵機率"
+      },
+      "warping_probability": {
+        "name": "翹邊機率"
+      },
+      "api_latency": {
+        "name": "AI API 延遲"
+      },
+      "print_history": {
+        "name": "AI Print History"
+      }
+    },
+    "camera": {
+      "ai_composite_camera": {
+        "name": "AI 守護合成快照"
+      }
+    },
+    "switch": {
+      "auto_pause": {
+        "name": "AI 故障自動暫停"
+      },
+      "median_filter": {
+        "name": "3 幀去噴頭濾波"
+      }
+    },
+    "number": {
+      "auto_pause_threshold": {
+        "name": "AI 自動暫停閾值"
+      },
+      "first_layer_checks": {
+        "name": "AI First-Layer Checks (Layer 1)"
+      },
+      "check_interval_layers": {
+        "name": "AI 層檢查間隔"
+      },
+      "check_interval_minutes": {
+        "name": "AI Minute Check Interval"
+      },
+      "purge_keep_prints": {
+        "name": "Purge: Keep Last X Prints"
+      }
+    },
+    "select": {
+      "check_mode": {
+        "name": "AI Check Schedule Mode",
+        "state": {
+          "layers": "Every X Layers",
+          "minutes": "Every X Minutes",
+          "both": "Both (Layers & Minutes)"
+        }
+      }
+    },
+    "button": {
+      "inspect_now": {
+        "name": "立即 AI 檢查"
+      },
+      "purge_history": {
+        "name": "Purge Old Print History (> X)"
+      }
+    }
+  },
+  "services": {
+    "inspect_now": {
+      "name": "立即檢查列印",
+      "description": "擷取即時快照並立即執行 Gemini AI 炒麵、翹邊與脫落檢查。",
+      "fields": {
+        "entry_id": {
+          "name": "設定條目 ID",
+          "description": "保護多台印表機時的選填設定 ID。"
+        }
+      }
+    }
+  }
+}

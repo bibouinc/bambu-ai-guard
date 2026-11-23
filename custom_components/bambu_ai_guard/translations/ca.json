@@ -1,0 +1,146 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configuració de Bambu AI Guard",
+        "description": "Seleccioneu la vostra impressora Bambu Lab (P1P, P1S, A1, A1 Mini, X1C) i enganxeu la clau API de Google Gemini.",
+        "data": {
+          "printer_device_id": "Impressora Bambu Lab",
+          "printer_model": "Model d'impressora",
+          "printer_ip": "Printer LAN IP Address",
+          "access_code": "Printer LAN Access Code (8 chars)",
+          "printer_serial": "Printer Serial Number (Optional)",
+          "gemini_api_key": "Clau API de Google Gemini"
+        }
+      }
+    },
+    "error": {
+      "missing_api_key": "Introduïu una clau API de Gemini vàlida.",
+      "invalid_api_key": "Clau API de Gemini no vàlida.",
+      "cannot_connect": "No s'ha pogut connectar a l'API de Google Gemini.",
+      "missing_printer_connection": "Please provide your printer LAN IP and Access Code."
+    },
+    "abort": {
+      "already_configured": "Aquesta impressora Bambu Lab ja està protegida per Bambu AI Guard."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opcions de Bambu AI Guard",
+        "data": {
+          "gemini_api_key": "Clau API de Gemini principal",
+          "check_mode": "Inspection Frequency Mode",
+          "first_layer_checks": "First-Layer Checks (Layer 1)",
+          "check_interval_layers": "Inspecciona cada N capes (a més de les capes crítiques 2, 3, 5, 25)",
+          "check_interval_minutes": "AI Minute Check Interval (min)",
+          "auto_pause": "Pausa automàticament la impressió en cas de defecte crític",
+          "auto_pause_threshold": "Llindar de confiança per a la pausa automàtica (%)",
+          "use_median_filter": "Filtre medià temporal de 3 fotogrames (CoreXY: P1P/P1S/X1C)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "defect_detected": {
+        "name": "Defecte d'impressió detectat"
+      },
+      "spaghetti_detected": {
+        "name": "Espagueti detectat"
+      },
+      "warping_detected": {
+        "name": "Warping detectat"
+      },
+      "detachment_detected": {
+        "name": "Despreniment de peça detectat"
+      },
+      "first_layer_defect": {
+        "name": "Defecte de primera capa"
+      },
+      "any_failure_detected": {
+        "name": "Error crític d'impressió detectat"
+      }
+    },
+    "sensor": {
+      "ai_status": {
+        "name": "Estat d'AI Guard"
+      },
+      "ai_confidence": {
+        "name": "Confiança IA"
+      },
+      "spaghetti_probability": {
+        "name": "Probabilitat d'espagueti"
+      },
+      "warping_probability": {
+        "name": "Probabilitat de warping"
+      },
+      "api_latency": {
+        "name": "Latència API IA"
+      },
+      "print_history": {
+        "name": "AI Print History"
+      }
+    },
+    "camera": {
+      "ai_composite_camera": {
+        "name": "Instantània composta AI Guard"
+      }
+    },
+    "switch": {
+      "auto_pause": {
+        "name": "Pausa automàtica IA en error"
+      },
+      "median_filter": {
+        "name": "Filtre de 3 fotogrames anti-broquet"
+      }
+    },
+    "number": {
+      "auto_pause_threshold": {
+        "name": "Llindar de pausa automàtica IA"
+      },
+      "first_layer_checks": {
+        "name": "AI First-Layer Checks (Layer 1)"
+      },
+      "check_interval_layers": {
+        "name": "Interval de capes IA"
+      },
+      "check_interval_minutes": {
+        "name": "AI Minute Check Interval"
+      },
+      "purge_keep_prints": {
+        "name": "Purge: Keep Last X Prints"
+      }
+    },
+    "select": {
+      "check_mode": {
+        "name": "AI Check Schedule Mode",
+        "state": {
+          "layers": "Every X Layers",
+          "minutes": "Every X Minutes",
+          "both": "Both (Layers & Minutes)"
+        }
+      }
+    },
+    "button": {
+      "inspect_now": {
+        "name": "Inspecciona ara (IA)"
+      },
+      "purge_history": {
+        "name": "Purge Old Print History (> X)"
+      }
+    }
+  },
+  "services": {
+    "inspect_now": {
+      "name": "Inspecciona la impressió ara",
+      "description": "Captura una imatge de la càmera i executa una comprovació immediata amb Gemini IA.",
+      "fields": {
+        "entry_id": {
+          "name": "ID de configuració",
+          "description": "ID opcional si hi ha diverses impressores Bambu configurades."
+        }
+      }
+    }
+  }
+}

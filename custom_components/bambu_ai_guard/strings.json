@@ -1,0 +1,146 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Bambu AI Guard Setup",
+        "description": "Select your Bambu Lab printer (P1P, P1S, A1, A1 Mini, X1C) and paste your Google Gemini API key.",
+        "data": {
+          "printer_device_id": "Bambu Lab Printer",
+          "printer_model": "Printer Model",
+          "printer_ip": "Printer LAN IP Address",
+          "access_code": "Printer LAN Access Code (8 chars)",
+          "printer_serial": "Printer Serial Number (Optional)",
+          "gemini_api_key": "Google Gemini API Key"
+        }
+      }
+    },
+    "error": {
+      "missing_api_key": "Please enter a valid Gemini API key.",
+      "invalid_api_key": "Invalid Gemini API key. Check your key in Google AI Studio.",
+      "cannot_connect": "Unable to reach Google Gemini API. Check your internet connection.",
+      "missing_printer_connection": "Please provide your printer LAN IP and Access Code."
+    },
+    "abort": {
+      "already_configured": "This Bambu Lab printer is already guarded by Bambu AI Guard."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Bambu AI Guard Options",
+        "data": {
+          "gemini_api_key": "Primary Gemini API Key",
+          "check_mode": "Inspection Frequency Mode",
+          "first_layer_checks": "First-Layer Checks (Layer 1)",
+          "check_interval_layers": "Inspect every N layers (in addition to critical layers 2, 3, 5, 25)",
+          "check_interval_minutes": "AI Minute Check Interval (min)",
+          "auto_pause": "Automatically pause print on high-confidence defect",
+          "auto_pause_threshold": "Auto-Pause Confidence Threshold (%)",
+          "use_median_filter": "3-Frame Temporal Median Nozzle Filter (CoreXY: P1P/P1S/X1C)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "defect_detected": {
+        "name": "Any Print Defect Detected"
+      },
+      "spaghetti_detected": {
+        "name": "Spaghetti Detected"
+      },
+      "warping_detected": {
+        "name": "Warping Detected"
+      },
+      "detachment_detected": {
+        "name": "Part Detachment Detected"
+      },
+      "first_layer_defect": {
+        "name": "First-Layer Defect"
+      },
+      "any_failure_detected": {
+        "name": "Critical Print Failure Detected"
+      }
+    },
+    "sensor": {
+      "ai_status": {
+        "name": "AI Guard Status"
+      },
+      "ai_confidence": {
+        "name": "AI Confidence"
+      },
+      "spaghetti_probability": {
+        "name": "Spaghetti Probability"
+      },
+      "warping_probability": {
+        "name": "Warping Probability"
+      },
+      "api_latency": {
+        "name": "AI API Latency"
+      },
+      "print_history": {
+        "name": "AI Print History"
+      }
+    },
+    "camera": {
+      "ai_composite_camera": {
+        "name": "AI Guard Composite Snapshot"
+      }
+    },
+    "switch": {
+      "auto_pause": {
+        "name": "AI Auto-Pause on Failure"
+      },
+      "median_filter": {
+        "name": "3-Frame Nozzle Erasing Filter"
+      }
+    },
+    "number": {
+      "auto_pause_threshold": {
+        "name": "AI Auto-Pause Threshold"
+      },
+      "first_layer_checks": {
+        "name": "AI First-Layer Checks (Layer 1)"
+      },
+      "check_interval_layers": {
+        "name": "AI Layer Check Interval"
+      },
+      "check_interval_minutes": {
+        "name": "AI Minute Check Interval"
+      },
+      "purge_keep_prints": {
+        "name": "Purge: Keep Last X Prints"
+      }
+    },
+    "select": {
+      "check_mode": {
+        "name": "AI Check Schedule Mode",
+        "state": {
+          "layers": "Every X Layers",
+          "minutes": "Every X Minutes",
+          "both": "Both (Layers & Minutes)"
+        }
+      }
+    },
+    "button": {
+      "inspect_now": {
+        "name": "AI Inspect Now"
+      },
+      "purge_history": {
+        "name": "Purge Old Print History (> X)"
+      }
+    }
+  },
+  "services": {
+    "inspect_now": {
+      "name": "Inspect print now",
+      "description": "Capture a live camera snapshot and run an immediate Gemini AI spaghetti, warping, and detachment check.",
+      "fields": {
+        "entry_id": {
+          "name": "Config Entry ID",
+          "description": "Optional config entry ID if multiple Bambu printers are guarded."
+        }
+      }
+    }
+  }
+}

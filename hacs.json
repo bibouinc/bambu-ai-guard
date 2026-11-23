@@ -1,0 +1,5 @@
+{
+  "name": "Bambu AI Guard (Spaghetti & Warping Detection)",
+  "render_readme": true,
+  "homeassistant": "2024.4.0"
+}

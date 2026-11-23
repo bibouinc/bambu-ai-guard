@@ -1,0 +1,146 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Bambu AI Guard Instellen",
+        "description": "Selecteer uw Bambu Lab-printer (P1P, P1S, A1, A1 Mini, X1C) en plak uw Google Gemini API-sleutel.",
+        "data": {
+          "printer_device_id": "Bambu Lab Printer",
+          "printer_model": "Printermodel",
+          "printer_ip": "Printer LAN IP Address",
+          "access_code": "Printer LAN Access Code (8 chars)",
+          "printer_serial": "Printer Serial Number (Optional)",
+          "gemini_api_key": "Google Gemini API-sleutel"
+        }
+      }
+    },
+    "error": {
+      "missing_api_key": "Voer een geldige Gemini API-sleutel in.",
+      "invalid_api_key": "Ongeldige Gemini API-sleutel.",
+      "cannot_connect": "Kan geen verbinding maken met de Google Gemini API.",
+      "missing_printer_connection": "Please provide your printer LAN IP and Access Code."
+    },
+    "abort": {
+      "already_configured": "Deze Bambu Lab-printer wordt al bewaakt door Bambu AI Guard."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Bambu AI Guard Opties",
+        "data": {
+          "gemini_api_key": "Primaire Gemini API-sleutel",
+          "check_mode": "Inspection Frequency Mode",
+          "first_layer_checks": "First-Layer Checks (Layer 1)",
+          "check_interval_layers": "Inspecteer elke N lagen (naast kritieke lagen 2, 3, 5, 25)",
+          "check_interval_minutes": "AI Minute Check Interval (min)",
+          "auto_pause": "Print automatisch pauzeren bij kritiek defect",
+          "auto_pause_threshold": "Drempelwaarde voor automatisch pauzeren (%)",
+          "use_median_filter": "3-Frame mediaan spuitmondfilter (CoreXY: P1P/P1S/X1C)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "defect_detected": {
+        "name": "Printdefect gedetecteerd"
+      },
+      "spaghetti_detected": {
+        "name": "Spaghetti gedetecteerd"
+      },
+      "warping_detected": {
+        "name": "Warping gedetecteerd"
+      },
+      "detachment_detected": {
+        "name": "Loslaten van onderdeel gedetecteerd"
+      },
+      "first_layer_defect": {
+        "name": "Eerste-laag defect"
+      },
+      "any_failure_detected": {
+        "name": "Kritieke printfout gedetecteerd"
+      }
+    },
+    "sensor": {
+      "ai_status": {
+        "name": "AI Guard Status"
+      },
+      "ai_confidence": {
+        "name": "AI Betrouwbaarheid"
+      },
+      "spaghetti_probability": {
+        "name": "Spaghetti-waarschijnlijkheid"
+      },
+      "warping_probability": {
+        "name": "Warping-waarschijnlijkheid"
+      },
+      "api_latency": {
+        "name": "AI API-latentie"
+      },
+      "print_history": {
+        "name": "AI Print History"
+      }
+    },
+    "camera": {
+      "ai_composite_camera": {
+        "name": "AI Guard Samengestelde Snapshot"
+      }
+    },
+    "switch": {
+      "auto_pause": {
+        "name": "AI Auto-Pauze bij fout"
+      },
+      "median_filter": {
+        "name": "3-Frame spuitmondfilter"
+      }
+    },
+    "number": {
+      "auto_pause_threshold": {
+        "name": "AI Auto-Pauze drempelwaarde"
+      },
+      "first_layer_checks": {
+        "name": "AI First-Layer Checks (Layer 1)"
+      },
+      "check_interval_layers": {
+        "name": "AI Laag-controle-interval"
+      },
+      "check_interval_minutes": {
+        "name": "AI Minute Check Interval"
+      },
+      "purge_keep_prints": {
+        "name": "Purge: Keep Last X Prints"
+      }
+    },
+    "select": {
+      "check_mode": {
+        "name": "AI Check Schedule Mode",
+        "state": {
+          "layers": "Every X Layers",
+          "minutes": "Every X Minutes",
+          "both": "Both (Layers & Minutes)"
+        }
+      }
+    },
+    "button": {
+      "inspect_now": {
+        "name": "Nu inspecteren (AI)"
+      },
+      "purge_history": {
+        "name": "Purge Old Print History (> X)"
+      }
+    }
+  },
+  "services": {
+    "inspect_now": {
+      "name": "Print nu inspecteren",
+      "description": "Maak een camerasnapshot en voer direct een Gemini AI-controle uit.",
+      "fields": {
+        "entry_id": {
+          "name": "Configuratie-ID",
+          "description": "Optionele configuratie-ID als meerdere printers worden bewaakt."
+        }
+      }
+    }
+  }
+}

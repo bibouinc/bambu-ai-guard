@@ -1,0 +1,146 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Bambu AI Guard Einrichtung",
+        "description": "Wählen Sie Ihren Bambu Lab Drucker (P1P, P1S, A1, A1 Mini, X1C) und fügen Sie Ihren Google Gemini API-Schlüssel ein.",
+        "data": {
+          "printer_device_id": "Bambu Lab Drucker",
+          "printer_model": "Druckermodell",
+          "printer_ip": "Printer LAN IP Address",
+          "access_code": "Printer LAN Access Code (8 chars)",
+          "printer_serial": "Printer Serial Number (Optional)",
+          "gemini_api_key": "Google Gemini API-Schlüssel"
+        }
+      }
+    },
+    "error": {
+      "missing_api_key": "Bitte geben Sie einen gültigen Gemini API-Schlüssel ein.",
+      "invalid_api_key": "Ungültiger Gemini API-Schlüssel. Prüfen Sie Ihren Schlüssel in Google AI Studio.",
+      "cannot_connect": "Verbindung zur Google Gemini API fehlgeschlagen.",
+      "missing_printer_connection": "Please provide your printer LAN IP and Access Code."
+    },
+    "abort": {
+      "already_configured": "Dieser Bambu Lab Drucker wird bereits von Bambu AI Guard überwacht."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Bambu AI Guard Optionen",
+        "data": {
+          "gemini_api_key": "Primärer Gemini API-Schlüssel",
+          "check_mode": "Inspection Frequency Mode",
+          "first_layer_checks": "First-Layer Checks (Layer 1)",
+          "check_interval_layers": "Alle N Schichten prüfen (zusätzlich zu den kritischen Schichten 2, 3, 5, 25)",
+          "check_interval_minutes": "AI Minute Check Interval (min)",
+          "auto_pause": "Druck bei erkanntem Fehler mit hoher Konfidenz automatisch pausieren",
+          "auto_pause_threshold": "Schwellenwert für Auto-Pause (%)",
+          "use_median_filter": "3-Bilder Median-Düsenfilter (CoreXY: P1P/P1S/X1C)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "defect_detected": {
+        "name": "Druckfehler erkannt"
+      },
+      "spaghetti_detected": {
+        "name": "Spaghetti erkannt"
+      },
+      "warping_detected": {
+        "name": "Warping erkannt"
+      },
+      "detachment_detected": {
+        "name": "Bauteilablösung erkannt"
+      },
+      "first_layer_defect": {
+        "name": "Erste-Schicht-Fehler"
+      },
+      "any_failure_detected": {
+        "name": "Kritischer Druckabbruch erkannt"
+      }
+    },
+    "sensor": {
+      "ai_status": {
+        "name": "AI Guard Status"
+      },
+      "ai_confidence": {
+        "name": "KI-Konfidenz"
+      },
+      "spaghetti_probability": {
+        "name": "Spaghetti-Wahrscheinlichkeit"
+      },
+      "warping_probability": {
+        "name": "Warping-Wahrscheinlichkeit"
+      },
+      "api_latency": {
+        "name": "KI-API-Latenz"
+      },
+      "print_history": {
+        "name": "AI Print History"
+      }
+    },
+    "camera": {
+      "ai_composite_camera": {
+        "name": "AI Guard Composite-Snapshot"
+      }
+    },
+    "switch": {
+      "auto_pause": {
+        "name": "KI Auto-Pause bei Fehler"
+      },
+      "median_filter": {
+        "name": "3-Bilder Düsen-Filter"
+      }
+    },
+    "number": {
+      "auto_pause_threshold": {
+        "name": "KI Auto-Pause Schwellenwert"
+      },
+      "first_layer_checks": {
+        "name": "AI First-Layer Checks (Layer 1)"
+      },
+      "check_interval_layers": {
+        "name": "KI Schicht-Prüfintervall"
+      },
+      "check_interval_minutes": {
+        "name": "AI Minute Check Interval"
+      },
+      "purge_keep_prints": {
+        "name": "Purge: Keep Last X Prints"
+      }
+    },
+    "select": {
+      "check_mode": {
+        "name": "AI Check Schedule Mode",
+        "state": {
+          "layers": "Every X Layers",
+          "minutes": "Every X Minutes",
+          "both": "Both (Layers & Minutes)"
+        }
+      }
+    },
+    "button": {
+      "inspect_now": {
+        "name": "Jetzt per KI prüfen"
+      },
+      "purge_history": {
+        "name": "Purge Old Print History (> X)"
+      }
+    }
+  },
+  "services": {
+    "inspect_now": {
+      "name": "Druck jetzt prüfen",
+      "description": "Erstellt einen Kamera-Snapshot und führt sofort eine Gemini-KI-Prüfung auf Spaghetti, Warping und Ablösung durch.",
+      "fields": {
+        "entry_id": {
+          "name": "Konfigurations-ID",
+          "description": "Optionale Konfigurations-ID bei mehreren überwachten Druckern."
+        }
+      }
+    }
+  }
+}

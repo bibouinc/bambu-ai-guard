@@ -1,0 +1,146 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "ตั้งค่า Bambu AI Guard",
+        "description": "เลือกเครื่องพิมพ์ Bambu Lab (P1P, P1S, A1, A1 Mini, X1C) และวางคีย์ Google Gemini API ของคุณ",
+        "data": {
+          "printer_device_id": "เครื่องพิมพ์ Bambu Lab",
+          "printer_model": "รุ่นเครื่องพิมพ์",
+          "printer_ip": "Printer LAN IP Address",
+          "access_code": "Printer LAN Access Code (8 chars)",
+          "printer_serial": "Printer Serial Number (Optional)",
+          "gemini_api_key": "คีย์ Google Gemini API"
+        }
+      }
+    },
+    "error": {
+      "missing_api_key": "กรุณากรอกคีย์ Gemini API ที่ถูกต้อง",
+      "invalid_api_key": "คีย์ Gemini API ไม่ถูกต้อง",
+      "cannot_connect": "ไม่สามารถเชื่อมต่อกับ Google Gemini API ได้",
+      "missing_printer_connection": "Please provide your printer LAN IP and Access Code."
+    },
+    "abort": {
+      "already_configured": "เครื่องพิมพ์ Bambu Lab นี้ได้รับการป้องกันโดย Bambu AI Guard แล้ว"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "ตัวเลือก Bambu AI Guard",
+        "data": {
+          "gemini_api_key": "คีย์ Gemini API หลัก",
+          "check_mode": "Inspection Frequency Mode",
+          "first_layer_checks": "First-Layer Checks (Layer 1)",
+          "check_interval_layers": "ตรวจสอบทุกๆ N เลเยอร์ (นอกเหนือจากเลเยอร์สำคัญ 2, 3, 5, 25)",
+          "check_interval_minutes": "AI Minute Check Interval (min)",
+          "auto_pause": "หยุดการพิมพ์ชั่วคราวอัตโนมัติเมื่อพบข้อบกพร่องร้ายแรง",
+          "auto_pause_threshold": "เกณฑ์ความมั่นใจสำหรับหยุดชั่วคราวอัตโนมัติ (%)",
+          "use_median_filter": "ฟิลเตอร์มัธยฐาน 3 เฟรมลบหัวพิมพ์ (CoreXY: P1P/P1S/X1C)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "defect_detected": {
+        "name": "ตรวจพบความผิดปกติของการพิมพ์"
+      },
+      "spaghetti_detected": {
+        "name": "ตรวจพบเส้นพลาสติกพันกัน (Spaghetti)"
+      },
+      "warping_detected": {
+        "name": "ตรวจพบมุมชิ้นงานยกตัว (Warping)"
+      },
+      "detachment_detected": {
+        "name": "ตรวจพบชิ้นงานหลุดจากฐาน"
+      },
+      "first_layer_defect": {
+        "name": "ข้อบกพร่องในเลเยอร์แรก"
+      },
+      "any_failure_detected": {
+        "name": "ตรวจพบความล้มเหลวร้ายแรงในการพิมพ์"
+      }
+    },
+    "sensor": {
+      "ai_status": {
+        "name": "สถานะ AI Guard"
+      },
+      "ai_confidence": {
+        "name": "ความมั่นใจของ AI"
+      },
+      "spaghetti_probability": {
+        "name": "โอกาสเกิด Spaghetti"
+      },
+      "warping_probability": {
+        "name": "โอกาสเกิด Warping"
+      },
+      "api_latency": {
+        "name": "ความหน่วง AI API"
+      },
+      "print_history": {
+        "name": "AI Print History"
+      }
+    },
+    "camera": {
+      "ai_composite_camera": {
+        "name": "ภาพสแนปช็อตผสม AI Guard"
+      }
+    },
+    "switch": {
+      "auto_pause": {
+        "name": "AI หยุดอัตโนมัติเมื่อพิมพ์เสีย"
+      },
+      "median_filter": {
+        "name": "ฟิลเตอร์ 3 เฟรมลบหัวพิมพ์"
+      }
+    },
+    "number": {
+      "auto_pause_threshold": {
+        "name": "เกณฑ์หยุดอัตโนมัติ AI"
+      },
+      "first_layer_checks": {
+        "name": "AI First-Layer Checks (Layer 1)"
+      },
+      "check_interval_layers": {
+        "name": "ระยะห่างเลเยอร์ที่ตรวจสอบด้วย AI"
+      },
+      "check_interval_minutes": {
+        "name": "AI Minute Check Interval"
+      },
+      "purge_keep_prints": {
+        "name": "Purge: Keep Last X Prints"
+      }
+    },
+    "select": {
+      "check_mode": {
+        "name": "AI Check Schedule Mode",
+        "state": {
+          "layers": "Every X Layers",
+          "minutes": "Every X Minutes",
+          "both": "Both (Layers & Minutes)"
+        }
+      }
+    },
+    "button": {
+      "inspect_now": {
+        "name": "ตรวจสอบด้วย AI ทันที"
+      },
+      "purge_history": {
+        "name": "Purge Old Print History (> X)"
+      }
+    }
+  },
+  "services": {
+    "inspect_now": {
+      "name": "ตรวจสอบการพิมพ์ทันที",
+      "description": "จับภาพจากกล้องและรันการตรวจสอบ Gemini AI ทันที",
+      "fields": {
+        "entry_id": {
+          "name": "รหัสการตั้งค่า",
+          "description": "รหัสการตั้งค่าเพิ่มเติมหากมีเครื่องพิมพ์หลายเครื่อง"
+        }
+      }
+    }
+  }
+}

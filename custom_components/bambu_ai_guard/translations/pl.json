@@ -1,0 +1,146 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Konfiguracja Bambu AI Guard",
+        "description": "Wybierz drukarkę Bambu Lab (P1P, P1S, A1, A1 Mini, X1C) i wklej klucz API Google Gemini.",
+        "data": {
+          "printer_device_id": "Drukarka Bambu Lab",
+          "printer_model": "Model drukarki",
+          "printer_ip": "Printer LAN IP Address",
+          "access_code": "Printer LAN Access Code (8 chars)",
+          "printer_serial": "Printer Serial Number (Optional)",
+          "gemini_api_key": "Klucz API Google Gemini"
+        }
+      }
+    },
+    "error": {
+      "missing_api_key": "Wprowadź prawidłowy klucz API Gemini.",
+      "invalid_api_key": "Nieprawidłowy klucz API Gemini.",
+      "cannot_connect": "Nie można połączyć się z API Google Gemini.",
+      "missing_printer_connection": "Please provide your printer LAN IP and Access Code."
+    },
+    "abort": {
+      "already_configured": "Ta drukarka Bambu Lab jest już chroniona przez Bambu AI Guard."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opcje Bambu AI Guard",
+        "data": {
+          "gemini_api_key": "Główny klucz API Gemini",
+          "check_mode": "Inspection Frequency Mode",
+          "first_layer_checks": "First-Layer Checks (Layer 1)",
+          "check_interval_layers": "Sprawdzaj co N warstw (oprócz warstw krytycznych 2, 3, 5, 25)",
+          "check_interval_minutes": "AI Minute Check Interval (min)",
+          "auto_pause": "Automatycznie wstrzymaj druk po wykryciu krytycznego błędu",
+          "auto_pause_threshold": "Próg pewności automatycznego wstrzymania (%)",
+          "use_median_filter": "3-klatkowy filtr medianowy głowicy (CoreXY: P1P/P1S/X1C)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "defect_detected": {
+        "name": "Wykryto wadę wydruku"
+      },
+      "spaghetti_detected": {
+        "name": "Wykryto spaghetti"
+      },
+      "warping_detected": {
+        "name": "Wykryto podwinięcie (warping)"
+      },
+      "detachment_detected": {
+        "name": "Wykryto oderwanie modelu"
+      },
+      "first_layer_defect": {
+        "name": "Błąd pierwszej warstwy"
+      },
+      "any_failure_detected": {
+        "name": "Wykryto krytyczny błąd wydruku"
+      }
+    },
+    "sensor": {
+      "ai_status": {
+        "name": "Status AI Guard"
+      },
+      "ai_confidence": {
+        "name": "Pewność AI"
+      },
+      "spaghetti_probability": {
+        "name": "Prawdopodobieństwo spaghetti"
+      },
+      "warping_probability": {
+        "name": "Prawdopodobieństwo warpingu"
+      },
+      "api_latency": {
+        "name": "Opóźnienie API AI"
+      },
+      "print_history": {
+        "name": "AI Print History"
+      }
+    },
+    "camera": {
+      "ai_composite_camera": {
+        "name": "Zdjęcie kompozytowe AI Guard"
+      }
+    },
+    "switch": {
+      "auto_pause": {
+        "name": "Automatyczna pauza AI przy błędzie"
+      },
+      "median_filter": {
+        "name": "3-klatkowy filtr usuwania głowicy"
+      }
+    },
+    "number": {
+      "auto_pause_threshold": {
+        "name": "Próg automatycznej pauzy AI"
+      },
+      "first_layer_checks": {
+        "name": "AI First-Layer Checks (Layer 1)"
+      },
+      "check_interval_layers": {
+        "name": "Interwał warstw AI"
+      },
+      "check_interval_minutes": {
+        "name": "AI Minute Check Interval"
+      },
+      "purge_keep_prints": {
+        "name": "Purge: Keep Last X Prints"
+      }
+    },
+    "select": {
+      "check_mode": {
+        "name": "AI Check Schedule Mode",
+        "state": {
+          "layers": "Every X Layers",
+          "minutes": "Every X Minutes",
+          "both": "Both (Layers & Minutes)"
+        }
+      }
+    },
+    "button": {
+      "inspect_now": {
+        "name": "Sprawdź teraz (AI)"
+      },
+      "purge_history": {
+        "name": "Purge Old Print History (> X)"
+      }
+    }
+  },
+  "services": {
+    "inspect_now": {
+      "name": "Sprawdź wydruk teraz",
+      "description": "Pobierz obraz z kamery i uruchom natychmiastową kontrolę Gemini AI.",
+      "fields": {
+        "entry_id": {
+          "name": "ID wpisu konfiguracji",
+          "description": "Opcjonalne ID wpisu przy wielu drukarkach Bambu."
+        }
+      }
+    }
+  }
+}

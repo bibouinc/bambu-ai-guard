@@ -100,6 +100,7 @@ class ReplaySimulateView(HomeAssistantView):
                     auto_pause_threshold=coord.auto_pause_threshold,
                     printer_ip=coord.printer_ip,
                     access_code=coord.access_code,
+                    on_api_call=coord.record_api_call_metrics,
                 )
             )
         return web.json_response({"started": True, "progress": self.simulator.progress})

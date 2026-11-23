@@ -180,11 +180,21 @@ class PrintHistoryStore:
             return snapshot_url
 
     async def async_finish_active_print(self, final_state: str) -> None:
-        """Mark the currently tracked print job as completed/idle."""
+        """Mark the currently tracked print job with its Bambu outcome (completed, aborted, auto_paused)."""
         async with self._lock:
             if self._active_print is not None:
+                norm = (final_state or "").lower()
+                if self._active_print.get("auto_paused"):
+                    outcome = "auto_paused"
+                elif norm in ("finish", "finished", "complete", "completed"):
+                    outcome = "completed"
+                elif norm in ("failed", "canceled", "cancelled", "aborted", "stop"):
+                    outcome = "aborted"
+                else:
+                    outcome = norm or "ended"
                 self._active_print["ended_at"] = datetime.now(timezone.utc).isoformat()
-                self._active_print["printer_final_state"] = final_state
+                self._active_print["printer_final_state"] = norm
+                self._active_print["outcome"] = outcome
                 self._active_print = None
                 await self._async_save()
 

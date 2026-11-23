@@ -203,7 +203,11 @@ class BambuAIGuardCoordinator(DataUpdateCoordinator[InspectionVerdict]):
         self.last_check_monotonic: float = 0.0
         self.layer1_checks_done: int = 0
         self.total_inspections: int = 0
+        self.calls_today: int = 0
+        self._calls_today_date: str = ""
         self.failures_detected: int = 0
+        self.last_api_latency_ms: int | None = None
+        self.rate_limited: bool = False
         self._inspect_lock = asyncio.Lock()
         self._unsub_state_listener: Any = None
         self._unsub_timer_listener: Any = None
@@ -219,6 +223,24 @@ class BambuAIGuardCoordinator(DataUpdateCoordinator[InspectionVerdict]):
                 "Waiting for active print checkpoint."
             ),
         )
+
+    def record_api_call_metrics(
+        self, latency_ms: int | None, is_rate_limited: bool = False
+    ) -> None:
+        """Track total AI checks, daily free-tier call counter, latency, and HTTP 429 status."""
+        from datetime import datetime, timezone
+
+        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        if self._calls_today_date != today_str:
+            self._calls_today_date = today_str
+            self.calls_today = 0
+
+        self.total_inspections += 1
+        self.calls_today += 1
+        if latency_ms is not None:
+            self.last_api_latency_ms = latency_ms
+        self.rate_limited = is_rate_limited
+        self.async_update_listeners()
 
     def async_start_listeners(self) -> None:
         """Subscribe to layer changes and periodic timer for minute-based & Layer-1 checks."""
@@ -311,8 +333,14 @@ class BambuAIGuardCoordinator(DataUpdateCoordinator[InspectionVerdict]):
                     return
 
                 prev_layer = self._direct_layer
+                prev_status = self._direct_status
                 if "gcode_state" in p:
-                    self._direct_status = str(p["gcode_state"]).lower()
+                    new_st = str(p["gcode_state"]).lower()
+                    self._direct_status = new_st
+                    if new_st != prev_status and new_st in ("finish", "failed", "idle"):
+                        self.hass.loop.call_soon_threadsafe(
+                            self._handle_direct_status_change, new_st
+                        )
                 if "subtask_name" in p:
                     self._direct_subtask = str(p["subtask_name"])
                 if "total_layer_num" in p:
@@ -335,6 +363,17 @@ class BambuAIGuardCoordinator(DataUpdateCoordinator[InspectionVerdict]):
             self._mqtt_client = client
         except Exception as err:  # noqa: BLE001
             LOGGER.warning("Direct MQTT connect error to %s: %s", self.printer_ip, err)
+
+    @callback
+    def _handle_direct_status_change(self, new_status: str) -> None:
+        """Finalize active print record when direct LAN MQTT reports FINISH or FAILED (aborted)."""
+        self.last_checked_layer = -1
+        self.layer1_checks_done = 0
+        if self._layer1_task and not self._layer1_task.done():
+            self._layer1_task.cancel()
+        self.hass.async_create_task(
+            self.history.async_finish_active_print(new_status)
+        )
 
     @callback
     def _handle_direct_layer_change(self, layer: int) -> None:
@@ -644,7 +683,10 @@ class BambuAIGuardCoordinator(DataUpdateCoordinator[InspectionVerdict]):
                 trigger_reason=trigger_reason,
             )
 
-            self.total_inspections += 1
+            self.record_api_call_metrics(
+                verdict.latency_ms,
+                is_rate_limited=any("429" in w for w in verdict.warnings),
+            )
             auto_paused = False
             snapshot_url = await self.history.async_record_inspection(
                 print_name=self.get_print_name(),

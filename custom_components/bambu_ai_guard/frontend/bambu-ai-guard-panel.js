@@ -663,6 +663,94 @@ PANEL_SHEET.replaceSync(`
     border-color: var(--z-danger-ink);
   }
 
+  .origin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    border: 1px solid var(--z-border-soft);
+    background: var(--z-surface);
+    color: var(--z-ink-2);
+    white-space: nowrap;
+  }
+
+  .origin-badge[data-origin="guarded"] {
+    background: var(--z-ok-bg);
+    color: var(--z-ok-ink);
+    border-color: var(--z-ok-ink);
+  }
+
+  .origin-badge[data-outcome="aborted"],
+  .origin-badge[data-outcome="auto_paused"] {
+    background: var(--z-danger-bg);
+    color: var(--z-danger-ink);
+    border-color: var(--z-danger-ink);
+  }
+
+  .unified-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .unified-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 11px;
+    background: var(--z-surface-2);
+    border: 1px solid var(--z-border-soft);
+    flex-wrap: wrap;
+  }
+
+  .unified-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    flex: 1 1 240px;
+  }
+
+  .unified-thumb {
+    width: 84px;
+    height: 48px;
+    border-radius: 7px;
+    object-fit: cover;
+    background: #141414;
+    flex-shrink: 0;
+    border: 1px solid var(--z-border-soft);
+  }
+
+  .unified-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .unified-title {
+    font-size: 0.86rem;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .unified-badges {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: var(--z-ink-2);
+  }
+
   .gallery-strip {
     display: grid;
     grid-auto-flow: column;
@@ -878,7 +966,7 @@ PANEL_TEMPLATE.innerHTML = `
         <div class="kpi-value" id="kpi-prints">0</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label"><ha-icon icon="mdi:magnify-scan"></ha-icon>Total AI Checks</div>
+        <div class="kpi-label"><ha-icon icon="mdi:magnify-scan"></ha-icon>AI Checks Today</div>
         <div class="kpi-value" id="kpi-checks">0</div>
       </div>
       <div class="kpi-card">
@@ -886,33 +974,25 @@ PANEL_TEMPLATE.innerHTML = `
         <div class="kpi-value" id="kpi-failures">0</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label"><ha-icon icon="mdi:speedometer"></ha-icon>Last API Latency</div>
+        <div class="kpi-label"><ha-icon icon="mdi:speedometer"></ha-icon>API Latency</div>
         <div class="kpi-value" id="kpi-latency">—</div>
       </div>
     </div>
 
     <div class="panel-card">
       <h2 class="card-title">
-        <span class="label-with-icon"><ha-icon icon="mdi:movie-play-outline"></ha-icon>Try on a Previous Print</span>
+        <span class="label-with-icon"><ha-icon icon="mdi:history"></ha-icon><span id="history-title">Unified Print History</span></span>
         <div class="actions-row">
           <button type="button" class="zest-btn secondary" id="btn-refresh-timelapses"><ha-icon icon="mdi:refresh"></ha-icon>Refresh</button>
-          <button type="button" class="zest-btn" id="btn-run-replay" disabled><ha-icon icon="mdi:play-circle-outline"></ha-icon>Simulate Selected Print</button>
+          <button type="button" class="zest-btn secondary" id="btn-open-purge"><ha-icon icon="mdi:delete-sweep-outline"></ha-icon>Purge AI Logs…</button>
         </div>
       </h2>
-      <div class="slider-hint" style="margin-top:-6px;">Pick any previous print below to replay it with your current settings and see the exact layer where Auto-Pause would have triggered (dry-run only).</div>
-      <div class="gallery-strip" id="replay-gallery">
-        <div class="details-box">Loading previous print thumbnails…</div>
-      </div>
+      <div class="slider-hint" style="margin-top:-6px;">Shows both your live <strong>AI Guarded</strong> prints (Completed / Aborted / Auto-Paused) and your <strong>Pre-Guard</strong> Bambu timelapses — click <strong>Simulate</strong> on any past timelapse to test your current AI settings (dry-run only).</div>
       <div class="replay-banner" id="replay-banner" hidden></div>
       <div class="replay-grid" id="replay-grid"></div>
-    </div>
-
-    <div class="panel-card">
-      <h2 class="card-title">
-        <span class="label-with-icon"><ha-icon icon="mdi:history"></ha-icon><span id="history-title">Lifetime Print History (0 prints)</span></span>
-        <button type="button" class="zest-btn secondary" id="btn-open-purge"><ha-icon icon="mdi:delete-sweep-outline"></ha-icon>Purge History…</button>
-      </h2>
-      <div class="history-table" id="history-table"></div>
+      <div class="unified-list" id="unified-history-list">
+        <div class="details-box">Loading print history…</div>
+      </div>
     </div>
   </div>
 
@@ -1016,7 +1096,8 @@ class BambuAIGuardPanel extends HTMLElement {
   #bound = false;
   #entityMap = {};
   #timelapsesLoaded = false;
-  #selectedVideoId = "";
+  #timelapses = [];
+  #guardedPrints = [];
   #pollTimer = null;
 
   constructor() {
@@ -1126,9 +1207,6 @@ class BambuAIGuardPanel extends HTMLElement {
       sr.getElementById("btn-refresh-timelapses").addEventListener("click", () => {
         this.#loadTimelapses();
       });
-      sr.getElementById("btn-run-replay").addEventListener("click", () => {
-        this.#startReplay();
-      });
       bindNum("ctrl-l1", "l1");
       bindNum("ctrl-layers", "layers");
       bindNum("ctrl-mins", "mins");
@@ -1147,93 +1225,144 @@ class BambuAIGuardPanel extends HTMLElement {
 
   async #loadTimelapses() {
     if (!this.#hass) return;
-    const gallery = this.shadowRoot.getElementById("replay-gallery");
-    const runBtn = this.shadowRoot.getElementById("btn-run-replay");
     try {
       const data = await this.#hass.callApi("GET", "bambu_ai_guard/timelapses");
-      const list = Array.isArray(data?.timelapses) ? data.timelapses : [];
-      if (list.length === 0) {
-        gallery.innerHTML = `<div class="details-box">No previous print timelapses found in /media or printer SD card.</div>`;
-        runBtn.disabled = true;
-        return;
-      }
-
-      if (!this.#selectedVideoId || !list.some((x) => x.id === this.#selectedVideoId)) {
-        this.#selectedVideoId = list[0].id;
-      }
-      runBtn.disabled = false;
-
-      gallery.replaceChildren(
-        ...list.slice(0, 20).map((item) => {
-          const card = document.createElement("button");
-          card.type = "button";
-          card.className = "gallery-card";
-          card.dataset.videoId = item.id;
-          if (item.id === this.#selectedVideoId) {
-            card.setAttribute("data-selected", "true");
-          }
-
-          if (item.thumb_url) {
-            const img = document.createElement("img");
-            img.className = "gallery-thumb";
-            img.loading = "lazy";
-            img.src = item.thumb_url;
-            img.alt = item.label;
-            card.append(img);
-          } else {
-            const ph = document.createElement("div");
-            ph.className = "gallery-thumb";
-            ph.style.display = "grid";
-            ph.style.placeItems = "center";
-            ph.style.color = "#aaa";
-            ph.style.fontSize = "0.75rem";
-            ph.textContent = "Printer SD Timelapse";
-            card.append(ph);
-          }
-
-          const meta = document.createElement("div");
-          meta.className = "gallery-meta";
-          const t = document.createElement("div");
-          t.className = "gallery-title";
-          t.textContent = item.label;
-          t.title = item.label;
-          const s = document.createElement("div");
-          s.className = "gallery-sub";
-          s.textContent = item.size_mb ? `${item.size_mb} MB` : "SD Card";
-          meta.append(t, s);
-          card.append(meta);
-
-          card.addEventListener("click", () => {
-            this.#selectedVideoId = item.id;
-            gallery.querySelectorAll(".gallery-card").forEach((el) => {
-              el.setAttribute(
-                "data-selected",
-                el.dataset.videoId === item.id ? "true" : "false"
-              );
-            });
-            runBtn.disabled = false;
-          });
-          return card;
-        })
-      );
-    } catch (err) {
-      gallery.innerHTML = `<div class="details-box">Could not load previous prints — restart Home Assistant to activate v1.5.1.</div>`;
+      this.#timelapses = Array.isArray(data?.timelapses) ? data.timelapses : [];
+    } catch (_) {
+      this.#timelapses = [];
     }
+    this.#renderUnifiedHistory();
   }
 
-  async #startReplay() {
-    if (!this.#hass) return;
+  #renderUnifiedHistory() {
     const sr = this.shadowRoot;
-    const videoId = this.#selectedVideoId;
-    if (!videoId) return;
+    if (!sr) return;
+    const container = sr.getElementById("unified-history-list");
+    if (!container) return;
 
-    const btn = sr.getElementById("btn-run-replay");
+    const totalMerged = this.#guardedPrints.length + this.#timelapses.length;
+    sr.getElementById("history-title").textContent =
+      `Unified Print History (${totalMerged} prints · ${this.#guardedPrints.length} AI Guarded)`;
+    sr.getElementById("kpi-prints").textContent = String(totalMerged);
+
+    if (totalMerged === 0) {
+      container.innerHTML = `<div class="details-box">No prints recorded yet. Start a print or click "Inspect Now (AI)" to log your first entry!</div>`;
+      return;
+    }
+
+    const rows = [];
+
+    // 1. Live AI-Guarded Prints (New World)
+    for (const p of this.#guardedPrints) {
+      const row = document.createElement("div");
+      row.className = "unified-row";
+
+      const left = document.createElement("div");
+      left.className = "unified-left";
+      if (p.snapshot_url) {
+        const img = document.createElement("img");
+        img.className = "unified-thumb";
+        img.loading = "lazy";
+        img.src = p.snapshot_url;
+        img.alt = p.print_name || "Print";
+        left.append(img);
+      }
+
+      const info = document.createElement("div");
+      info.className = "unified-info";
+      const title = document.createElement("div");
+      title.className = "unified-title";
+      title.textContent = p.print_name || "Bambu Print";
+
+      const badges = document.createElement("div");
+      badges.className = "unified-badges";
+
+      const origin = document.createElement("span");
+      origin.className = "origin-badge";
+      origin.setAttribute("data-origin", "guarded");
+      origin.textContent = "🛡️ AI Guarded";
+      badges.append(origin);
+
+      const outcomeVal = p.outcome || (p.auto_paused ? "auto_paused" : p.ended_at ? "completed" : "active");
+      const outBadge = document.createElement("span");
+      outBadge.className = "origin-badge";
+      outBadge.setAttribute("data-outcome", outcomeVal);
+      if (outcomeVal === "auto_paused") outBadge.textContent = "🚨 AI Auto-Paused";
+      else if (outcomeVal === "aborted") outBadge.textContent = "🛑 Aborted";
+      else if (outcomeVal === "completed") outBadge.textContent = "✅ Completed";
+      else outBadge.textContent = "⏳ Active";
+      badges.append(outBadge);
+
+      const stats = document.createElement("span");
+      stats.textContent = `L${p.last_layer || 0}/${p.total_layers || 0} · ${p.inspections_count || 0} checks · Max Spaghetti ${p.max_spaghetti_pct ?? 0}%`;
+      badges.append(stats);
+
+      info.append(title, badges);
+      left.append(info);
+      row.append(left);
+      rows.push(row);
+    }
+
+    // 2. Past Bambu Timelapses (Pre-Guard / Old World) with 1-Click Simulate button
+    for (const item of this.#timelapses.slice(0, 25)) {
+      const row = document.createElement("div");
+      row.className = "unified-row";
+
+      const left = document.createElement("div");
+      left.className = "unified-left";
+      if (item.thumb_url) {
+        const img = document.createElement("img");
+        img.className = "unified-thumb";
+        img.loading = "lazy";
+        img.src = item.thumb_url;
+        img.alt = item.label;
+        left.append(img);
+      }
+
+      const info = document.createElement("div");
+      info.className = "unified-info";
+      const title = document.createElement("div");
+      title.className = "unified-title";
+      title.textContent = item.label;
+
+      const badges = document.createElement("div");
+      badges.className = "unified-badges";
+
+      const origin = document.createElement("span");
+      origin.className = "origin-badge";
+      origin.textContent = "📼 Pre-Guard Timelapse";
+      badges.append(origin);
+
+      const meta = document.createElement("span");
+      meta.textContent = item.size_mb ? `${item.size_mb} MB` : "Printer SD";
+      badges.append(meta);
+
+      info.append(title, badges);
+      left.append(info);
+
+      const simBtn = document.createElement("button");
+      simBtn.type = "button";
+      simBtn.className = "zest-btn secondary";
+      simBtn.innerHTML = `<ha-icon icon="mdi:play-circle-outline"></ha-icon>Simulate`;
+      simBtn.addEventListener("click", () => this.#startReplay(item.id));
+
+      row.append(left, simBtn);
+      rows.push(row);
+    }
+
+    container.replaceChildren(...rows);
+  }
+
+  async #startReplay(videoId) {
+    if (!this.#hass || !videoId) return;
+    const sr = this.shadowRoot;
     const banner = sr.getElementById("replay-banner");
-    btn.disabled = true;
-    btn.textContent = "Simulating…";
+    const grid = sr.getElementById("replay-grid");
+    grid.replaceChildren();
     banner.hidden = false;
     banner.removeAttribute("data-state");
-    banner.textContent = "Extracting timelapse layer frames and running Gemini Decisions API…";
+    banner.textContent = "⏳ Loading timelapse video and extracting checkpoint frames…";
+    banner.scrollIntoView({ behavior: "smooth", block: "nearest" });
 
     try {
       await this.#hass.callApi("POST", "bambu_ai_guard/simulate", {
@@ -1243,8 +1372,6 @@ class BambuAIGuardPanel extends HTMLElement {
       this.#pollTimer = setInterval(() => this.#pollReplayProgress(), 1200);
       await this.#pollReplayProgress();
     } catch (err) {
-      btn.disabled = false;
-      btn.textContent = "Simulate Print";
       banner.setAttribute("data-state", "fail");
       banner.textContent = `Simulation error: ${err.message || err}`;
     }
@@ -1302,8 +1429,6 @@ class BambuAIGuardPanel extends HTMLElement {
       }
 
       if (!p.running) {
-        btn.disabled = false;
-        btn.textContent = "Simulate Print";
         if (this.#pollTimer) {
           clearInterval(this.#pollTimer);
           this.#pollTimer = null;
@@ -1385,7 +1510,10 @@ class BambuAIGuardPanel extends HTMLElement {
       sr.getElementById("layer-chip").textContent = `Layer ${a.layer ?? "—"} / ${a.total_layers ?? "—"}`;
       sr.getElementById("latency-chip").textContent = a.latency_ms ? `${a.latency_ms} ms` : "gemini-decision-1";
       sr.getElementById("details-text").textContent = a.details || "Ready.";
-      sr.getElementById("kpi-checks").textContent = String(a.total_inspections ?? 0);
+      const callsToday = a.calls_today ?? a.total_inspections ?? 0;
+      sr.getElementById("kpi-checks").textContent = a.rate_limited
+        ? `${callsToday} (429 Limit)`
+        : `${callsToday} / 1500`;
       sr.getElementById("kpi-failures").textContent = String(a.failures_detected ?? 0);
       sr.getElementById("kpi-latency").textContent = a.latency_ms ? `${a.latency_ms} ms` : "—";
 
@@ -1462,30 +1590,8 @@ class BambuAIGuardPanel extends HTMLElement {
     const histObj = this.#entityMap.history ? this.#hass.states[this.#entityMap.history] : null;
     if (histObj) {
       const ha = histObj.attributes || {};
-      const total = ha.total_prints_recorded ?? histObj.state ?? 0;
-      sr.getElementById("history-title").textContent = `Lifetime Print History (${total} prints)`;
-      sr.getElementById("kpi-prints").textContent = String(total);
-
-      const table = sr.getElementById("history-table");
-      const prints = Array.isArray(ha.recent_prints) ? ha.recent_prints : [];
-      if (prints.length === 0) {
-        table.innerHTML = `<div class="details-box">No prints recorded yet. Start a print or click "Inspect Now (AI)" to log your first entry!</div>`;
-      } else {
-        table.replaceChildren(
-          ...prints.map((item) => {
-            const row = document.createElement("div");
-            row.className = "history-row";
-            const left = document.createElement("span");
-            left.style.fontWeight = "700";
-            left.textContent = `${item.status === "FAILURE" ? "🚨" : item.status === "WARNING" ? "⚠️" : "✅"} ${item.print_name || "Print"}`;
-            const right = document.createElement("span");
-            right.style.color = "var(--z-ink-2)";
-            right.textContent = `L${item.last_layer || 0}/${item.total_layers || 0} · ${item.inspections_count || 0} checks · Max Spaghetti ${item.max_spaghetti_pct ?? 0}%`;
-            row.append(left, right);
-            return row;
-          })
-        );
-      }
+      this.#guardedPrints = Array.isArray(ha.recent_prints) ? ha.recent_prints : [];
+      this.#renderUnifiedHistory();
     }
   }
 }

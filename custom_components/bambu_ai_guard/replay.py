@@ -323,6 +323,7 @@ class PrintReplaySimulator:
         auto_pause_threshold: int,
         printer_ip: str = "",
         access_code: str = "",
+        on_api_call: Any = None,
     ) -> dict[str, Any]:
         """Run a full checkpoint-by-checkpoint AI replay simulation without touching the real printer."""
         if self.running:
@@ -389,6 +390,11 @@ class PrintReplaySimulator:
                         frames_merged=1,
                         trigger_reason=f"replay_layer_{layer_num}",
                     )
+                    if callable(on_api_call):
+                        on_api_call(
+                            verdict.latency_ms,
+                            any("429" in w for w in verdict.warnings),
+                        )
                     conf_pct = round((verdict.confidence or 0.0) * 100.0, 1)
                     would_trigger_pause = (
                         verdict.status == STATUS_FAILURE

@@ -34,19 +34,27 @@ Only the flagship X1C ships with built-in AI spaghetti detection, and even then,
 ## How It Works (In 3 Simple Steps)
 
 ```mermaid
-flowchart LR
-    P["1. Your 3D Printer starts printing"]
-    T["2. Wait for the next check (Layer 1, then every X layers or Y minutes)"]
-    C["3. Snap a clear photo (erasing the moving printhead out of the way)"]
-    AI["4. Ask Google Gemini Decisions API:<br/>• Plastic spaghetti?<br/>• Corners lifting up?<br/>• Part came unstuck?<br/>• First layer messy?<br/>• Printhead blocking view?<br/>• Overall score (1 to 4)?"]
-    OK["Looks great! Keep printing"]
-    FAIL["Uh-oh! Hit PAUSE right away & send an alert"]
+flowchart TD
+    P(["🖨️ 1. Your 3D Printer Starts Printing"])
+    T["⏱️ 2. Wait for the Next Checkpoint<br/>Layer 1 Multi-Check · Every X Layers or Y Minutes"]
+    C["📸 3. Snap a Crystal-Clear Photo<br/>Erases the moving printhead out of the way"]
+    AI["🧠 4. Ask Google Gemini Decisions API<br/>──────────────────────────<br/>• Plastic spaghetti?<br/>• Corners lifting up?<br/>• Part came unstuck?<br/>• First layer messy?<br/>• Printhead blocking view?<br/>• Overall score (1 to 4)?"]
+    OK(["✅ All Good! Keep Printing & Log It"])
+    FAIL(["🚨 Problem Found! Hit PAUSE & Send Alert"])
 
     P --> T
-    T --> C --> AI
-    AI -->|"All Good"| OK
-    OK -->|"Loop until print finishes"| T
-    AI -->|"Problem Found"| FAIL
+    T --> C
+    C --> AI
+    AI -->|"Clean Print"| OK
+    OK -.->|"Loop until print finishes"| T
+    AI -->|"Defect Detected"| FAIL
+
+    style P fill:#E7F2DF,stroke:#1A260E,stroke-width:2px,color:#1A260E
+    style T fill:#FDFFFB,stroke:#1A260E,stroke-width:2px,color:#1A260E
+    style C fill:#FDFFFB,stroke:#1A260E,stroke-width:2px,color:#1A260E
+    style AI fill:#ECD8FF,stroke:#1A260E,stroke-width:2px,color:#1A260E
+    style OK fill:#D7F3C2,stroke:#217B44,stroke-width:2px,color:#1A260E
+    style FAIL fill:#FAD0CE,stroke:#BE423F,stroke-width:2px,color:#1A260E
 ```
 
 ### 1. Works 100% Standalone Over Wi-Fi (30-Second Setup)

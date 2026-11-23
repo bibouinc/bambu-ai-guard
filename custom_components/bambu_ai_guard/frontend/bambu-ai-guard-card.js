@@ -636,9 +636,9 @@ window.customCards = window.customCards || [];
 if (!window.customCards.some((c) => c.type === CARD_TAG)) {
   window.customCards.push({
     type: CARD_TAG,
-    name: "Bambu AI Guard (Zest Dashboard Card)",
+    name: "Bambu AI Guard Card",
     description:
-      "Live composite snapshot, Spaghetti/Warping/Detachment gauges, and Print History in Zest theme.",
+      "Live composite snapshot, Spaghetti/Warping/Detachment gauges, and Print History.",
     preview: true,
   });
 }

@@ -44,21 +44,22 @@ Unlike continuous video streams that eat bandwidth 24/7, Bambu AI Guard sleeps a
 - **High-Stress Transitions**: Always checks **Layer 2 & 3** (brim squish), **Layer 5** (when the cooling fan kicks on and causes thermal shrinkage), and **Layer 25** (bridging & warping peak).
 - **Your Custom Schedule**: Choose to inspect **Every `X` Layers** (e.g., every 10 layers), **Every `X` Minutes** (e.g., every 5 minutes), or **Both** right from a live slider on your dashboard.
 
-### 3. Instant Action + Bundled Zest Dashboard Card
+### 3. Instant Action + Built-In Sidebar Panel & Dashboard Card
 At each checkpoint, Google's **Gemini Decisions API** scores your print across 4 defect categories (**Spaghetti**, **Warping**, **Detachment**, and **First-Layer Defect**):
-- **Everything Looks Great (`OK`)**: The print continues uninterrupted and updates your live **Zest Lovelace Dashboard Card** (automatically installed with the integration!).
+- **Everything Looks Great (`OK`)**: The print continues uninterrupted and updates your live **Bambu AI Guard** sidebar panel and dashboard card.
 - **Minor Curling (`WARNING`)**: Sends a notification to your Home Assistant dashboard so you can take a look.
 - **Critical Failure (`FAILURE`)**: **Automatically pauses the print**, saves the evidence photo to your **Lifetime Print History**, and alerts you immediately so you can save the rest of your spool.
 
 ---
 
-## Built-In Custom Lovelace Card & Lifetime History
+## Built-In Sidebar Panel, Dashboard Card & Lifetime History
 
-No need to build a dashboard from scratch—installing **Bambu AI Guard** automatically registers the **Bambu AI Guard (Zest Dashboard Card)** in your Home Assistant card picker:
+The moment you add the integration, **"Bambu AI Guard"** appears automatically in your **Home Assistant left sidebar**—no manual dashboard setup required!
 - **Live Nozzle-Erased Snapshot** with layer badge and API latency.
 - **4 Live Probability Gauges** (`Spaghetti %`, `Warping %`, `Detachment %`, `First-Layer %`).
-- **1-Click Actions**: Trigger an immediate **Inspect Now (AI)** check or toggle **Auto-Pause**.
+- **Live Controls**: Trigger an immediate **Inspect Now (AI)** check, toggle **Auto-Pause**, adjust **Layer 1 Multi-Checks**, or switch between **Every X Layers** and **Every X Minutes**.
 - **Lifetime Print Logbook & 1-Click Purge**: Keeps a permanent history of your prints and failure photos forever—with a simple **"Purge Old (`> X`)"** button whenever you want to trim old records beyond your last `X` prints.
+- *(Want to embed it on another dashboard too? Just pick **Bambu AI Guard Card** from the Lovelace card picker.)*
 
 ---
 
@@ -68,17 +69,17 @@ No need to build a dashboard from scratch—installing **Bambu AI Guard** automa
 1. **Free Google Gemini API Key**:
    - Go to [Google AI Studio (aistudio.google.com/apikey)](https://aistudio.google.com/apikey), sign in with any Google account, click **"Create API Key"**, and copy it. *(100% free tier — no credit card required).*
 2. **Your Printer Connection**:
-   - **Using `ha-bambulab` (Easiest)**: Nothing needed! Just pick your printer from the dropdown.
-   - **Standalone Direct LAN (No `ha-bambulab`)**: Grab your **IP Address** and **8-character Access Code** directly from your printer's screen:
+   - **Standalone Direct LAN**: Grab your **IP Address** (auto-discovered via SSDP when powered on) and **8-character Access Code** directly from your printer's screen:
      - **P1P / P1S**: `Settings` → `WLAN`
      - **A1 / A1 Mini**: `Settings` → `LAN Only Mode` (or `WLAN`)
      - **X1C / X1E**: `Settings` → `Network`
+   - **Using `ha-bambulab` (Optional)**: Nothing needed! Just pick your printer from the dropdown.
 
 ### Install via HACS
 1. Open **HACS** in Home Assistant → **Integrations** → top-right menu (`⋮`) → **Custom repositories**.
 2. Paste `https://github.com/bibouinc/bambu-ai-guard` and select category **Integration**.
 3. Click **Download**, restart Home Assistant, and go to **Settings → Devices & Services → + Add Integration → Bambu AI Guard**.
-4. To add the visual card to any dashboard: click **Edit Dashboard → + Add Card → Bambu AI Guard (Zest Dashboard Card)**.
+4. Open **"Bambu AI Guard"** right from your **Home Assistant left sidebar** and click **Inspect Now (AI)** to test!
 
 ---
 

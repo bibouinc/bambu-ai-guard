@@ -4,15 +4,17 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from homeassistant.components import panel_custom
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.event import async_call_later
 
-from ..const import LOGGER
+from ..const import DOMAIN, LOGGER
 
 URL_BASE = "/bambu_ai_guard_frontend"
 CARD_FILENAME = "bambu-ai-guard-card.js"
-CARD_VERSION = "1.2.0"
+PANEL_FILENAME = "bambu-ai-guard-panel.js"
+CARD_VERSION = "1.3.0"
 
 
 class BambuAIGuardCardRegistration:
@@ -51,13 +53,28 @@ class BambuAIGuardCardRegistration:
         return None
 
     async def async_register(self) -> None:
-        """Register static path and Lovelace resource."""
+        """Register static path, sidebar panel, and Lovelace card resource."""
         try:
             await self.hass.http.async_register_static_paths(
                 [StaticPathConfig(URL_BASE, str(Path(__file__).parent), False)]
             )
         except RuntimeError:
             pass
+
+        # Register dedicated Home Assistant Sidebar Panel ("Bambu AI Guard")
+        try:
+            await panel_custom.async_register_panel(
+                self.hass,
+                frontend_url_path=DOMAIN,
+                webcomponent_name="bambu-ai-guard-panel",
+                sidebar_title="Bambu AI Guard",
+                sidebar_icon="mdi:printer-3d-nozzle-alert",
+                module_url=f"{URL_BASE}/{PANEL_FILENAME}?v={CARD_VERSION}",
+                require_admin=False,
+            )
+            LOGGER.info("Registered Bambu AI Guard sidebar panel at /%s", DOMAIN)
+        except Exception as err:  # noqa: BLE001
+            LOGGER.debug("Sidebar panel registration skipped/already exists: %s", err)
 
         if self._resource_mode == "storage":
             await self._async_wait_and_register_resource()

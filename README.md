@@ -36,14 +36,16 @@ Only the flagship X1C ships with built-in AI spaghetti detection, and even then,
 ```mermaid
 flowchart LR
     P["1. Your 3D Printer starts printing"]
-    T["2. Wake up at tricky moments (Layer 1, then every few layers or minutes)"]
+    T["2. Wait for the next check (Layer 1, then every X layers or Y minutes)"]
     C["3. Snap a clear photo (erasing the moving printhead out of the way)"]
-    AI["4. Ask Google AI: Clean print, or plastic spaghetti / peeling corners?"]
-    OK["Looks great! Keep printing & log it"]
+    AI["4. Ask Google Gemini Decisions API:<br/>• Plastic spaghetti?<br/>• Corners lifting up?<br/>• Part came unstuck?<br/>• First layer messy?<br/>• Printhead blocking view?<br/>• Overall score (1 to 4)?"]
+    OK["Looks great! Keep printing"]
     FAIL["Uh-oh! Hit PAUSE right away & send an alert"]
 
-    P --> T --> C --> AI
+    P --> T
+    T --> C --> AI
     AI -->|"All Good"| OK
+    OK -->|"Loop until print finishes"| T
     AI -->|"Problem Found"| FAIL
 ```
 

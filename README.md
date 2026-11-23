@@ -6,6 +6,9 @@
 
 **Turn your Bambu Lab P1P, P1S, A1, or A1 Mini into a self-monitoring smart printer in 30 seconds.**
 
+![Bambu AI Guard — Real Spaghetti Detection Replay](docs/replay-demo.png)
+*Real 1,239-layer Bambu Lab P1P print replayed through Bambu AI Guard: **0 false positives** across Layers 1–1060, then instant **93.1% Spaghetti Auto-Pause** on the exact failure frame.*
+
 ---
 
 ## Why We Built This

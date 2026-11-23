@@ -127,6 +127,91 @@ PANEL_SHEET.replaceSync(`
     color: var(--z-danger-ink);
   }
 
+  .tab-bar {
+    display: flex;
+    gap: 6px;
+    padding: 0 20px;
+    background: var(--app-header-background-color, var(--z-surface));
+    border-bottom: 1px solid var(--z-border-soft);
+    overflow-x: auto;
+  }
+
+  .tab-btn {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    color: var(--z-ink-2);
+    padding: 12px 16px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  .tab-btn ha-icon {
+    --mdc-icon-size: 18px;
+  }
+
+  .tab-btn[aria-selected="true"] {
+    color: var(--z-accent);
+    border-bottom-color: var(--z-accent);
+  }
+
+  .tab-pane {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .tab-pane[hidden] {
+    display: none;
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  .kpi-card {
+    background: var(--z-surface);
+    border: var(--ha-card-border-width, 1px) solid var(--z-border);
+    border-radius: var(--z-radius);
+    box-shadow: var(--z-shadow);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .kpi-label {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--z-ink-2);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .kpi-label ha-icon {
+    --mdc-icon-size: 16px;
+    color: var(--z-accent);
+  }
+
+  .kpi-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--z-ink);
+    font-variant-numeric: tabular-nums;
+  }
+
   .shell {
     max-width: 1180px;
     margin: 0 auto;
@@ -137,7 +222,92 @@ PANEL_SHEET.replaceSync(`
   }
 
   @media (max-width: 960px) {
-    .shell {
+    .tab-bar {
+    display: flex;
+    gap: 6px;
+    padding: 0 20px;
+    background: var(--app-header-background-color, var(--z-surface));
+    border-bottom: 1px solid var(--z-border-soft);
+    overflow-x: auto;
+  }
+
+  .tab-btn {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    color: var(--z-ink-2);
+    padding: 12px 16px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  .tab-btn ha-icon {
+    --mdc-icon-size: 18px;
+  }
+
+  .tab-btn[aria-selected="true"] {
+    color: var(--z-accent);
+    border-bottom-color: var(--z-accent);
+  }
+
+  .tab-pane {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .tab-pane[hidden] {
+    display: none;
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  .kpi-card {
+    background: var(--z-surface);
+    border: var(--ha-card-border-width, 1px) solid var(--z-border);
+    border-radius: var(--z-radius);
+    box-shadow: var(--z-shadow);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .kpi-label {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--z-ink-2);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .kpi-label ha-icon {
+    --mdc-icon-size: 16px;
+    color: var(--z-accent);
+  }
+
+  .kpi-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--z-ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .shell {
       grid-template-columns: 1fr;
     }
   }
@@ -651,7 +821,19 @@ PANEL_TEMPLATE.innerHTML = `
     <div class="status-pill" id="status-pill" data-status="IDLE">IDLE</div>
   </div>
 
-  <div class="shell">
+  <div class="tab-bar" role="tablist" aria-label="Bambu AI Guard Sections">
+    <button type="button" class="tab-btn" role="tab" id="tab-live" data-tab="live" aria-selected="true">
+      <ha-icon icon="mdi:camera-iris"></ha-icon>Live Guard
+    </button>
+    <button type="button" class="tab-btn" role="tab" id="tab-stats" data-tab="stats" aria-selected="false">
+      <ha-icon icon="mdi:chart-box-outline"></ha-icon>Stats &amp; Replay
+    </button>
+    <button type="button" class="tab-btn" role="tab" id="tab-settings" data-tab="settings" aria-selected="false">
+      <ha-icon icon="mdi:tune-variant"></ha-icon>Settings
+    </button>
+  </div>
+
+  <div class="tab-pane" id="pane-live" role="tabpanel">
     <div class="panel-card">
       <h2 class="card-title">
         <span class="label-with-icon"><ha-icon icon="mdi:camera-iris"></ha-icon>Live AI Camera Inspection</span>
@@ -687,7 +869,54 @@ PANEL_TEMPLATE.innerHTML = `
 
       <div class="details-box" id="details-text">Waiting for first inspection...</div>
     </div>
+  </div>
 
+  <div class="tab-pane" id="pane-stats" role="tabpanel" hidden>
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label"><ha-icon icon="mdi:printer-3d"></ha-icon>Prints Monitored</div>
+        <div class="kpi-value" id="kpi-prints">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label"><ha-icon icon="mdi:magnify-scan"></ha-icon>Total AI Checks</div>
+        <div class="kpi-value" id="kpi-checks">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label"><ha-icon icon="mdi:shield-alert-outline"></ha-icon>Failures Caught</div>
+        <div class="kpi-value" id="kpi-failures">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label"><ha-icon icon="mdi:speedometer"></ha-icon>Last API Latency</div>
+        <div class="kpi-value" id="kpi-latency">—</div>
+      </div>
+    </div>
+
+    <div class="panel-card">
+      <h2 class="card-title">
+        <span class="label-with-icon"><ha-icon icon="mdi:movie-play-outline"></ha-icon>Try on a Previous Print</span>
+        <div class="actions-row">
+          <button type="button" class="zest-btn secondary" id="btn-refresh-timelapses"><ha-icon icon="mdi:refresh"></ha-icon>Refresh</button>
+          <button type="button" class="zest-btn" id="btn-run-replay" disabled><ha-icon icon="mdi:play-circle-outline"></ha-icon>Simulate Selected Print</button>
+        </div>
+      </h2>
+      <div class="slider-hint" style="margin-top:-6px;">Pick any previous print below to replay it with your current settings and see the exact layer where Auto-Pause would have triggered (dry-run only).</div>
+      <div class="gallery-strip" id="replay-gallery">
+        <div class="details-box">Loading previous print thumbnails…</div>
+      </div>
+      <div class="replay-banner" id="replay-banner" hidden></div>
+      <div class="replay-grid" id="replay-grid"></div>
+    </div>
+
+    <div class="panel-card">
+      <h2 class="card-title">
+        <span class="label-with-icon"><ha-icon icon="mdi:history"></ha-icon><span id="history-title">Lifetime Print History (0 prints)</span></span>
+        <button type="button" class="zest-btn secondary" id="btn-open-purge"><ha-icon icon="mdi:delete-sweep-outline"></ha-icon>Purge History…</button>
+      </h2>
+      <div class="history-table" id="history-table"></div>
+    </div>
+  </div>
+
+  <div class="tab-pane" id="pane-settings" role="tabpanel" hidden>
     <div class="panel-card">
       <h2 class="card-title"><span class="label-with-icon"><ha-icon icon="mdi:tune-variant"></ha-icon>Guard Settings</span></h2>
 
@@ -760,30 +989,6 @@ PANEL_TEMPLATE.innerHTML = `
         <input type="range" id="ctrl-mins" min="1" max="60" step="1" value="5" />
       </div>
     </div>
-
-    <div class="panel-card full-width">
-      <h2 class="card-title">
-        <span class="label-with-icon"><ha-icon icon="mdi:movie-play-outline"></ha-icon>Try on a Previous Print</span>
-        <div class="actions-row">
-          <button type="button" class="zest-btn secondary" id="btn-refresh-timelapses"><ha-icon icon="mdi:refresh"></ha-icon>Refresh</button>
-          <button type="button" class="zest-btn" id="btn-run-replay" disabled><ha-icon icon="mdi:play-circle-outline"></ha-icon>Simulate Selected Print</button>
-        </div>
-      </h2>
-      <div class="slider-hint" style="margin-top:-6px;">Pick any previous print below to replay it with your current settings and see the exact layer where Auto-Pause would have triggered (dry-run only).</div>
-      <div class="gallery-strip" id="replay-gallery">
-        <div class="details-box">Loading previous print thumbnails…</div>
-      </div>
-      <div class="replay-banner" id="replay-banner" hidden></div>
-      <div class="replay-grid" id="replay-grid"></div>
-    </div>
-
-    <div class="panel-card full-width">
-      <h2 class="card-title">
-        <span class="label-with-icon"><ha-icon icon="mdi:history"></ha-icon><span id="history-title">Lifetime Print History (0 prints)</span></span>
-        <button type="button" class="zest-btn secondary" id="btn-open-purge"><ha-icon icon="mdi:delete-sweep-outline"></ha-icon>Purge History…</button>
-      </h2>
-      <div class="history-table" id="history-table"></div>
-    </div>
   </div>
 
   <dialog class="purge-dialog" id="purge-dialog" closedby="any" aria-labelledby="purge-dialog-title">
@@ -827,6 +1032,17 @@ class BambuAIGuardPanel extends HTMLElement {
       const sr = this.shadowRoot;
       sr.getElementById("btn-menu").addEventListener("click", () => {
         this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: true, composed: true }));
+      });
+      sr.querySelectorAll("[data-tab]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const target = btn.dataset.tab;
+          sr.querySelectorAll("[data-tab]").forEach((b) => {
+            b.setAttribute("aria-selected", b.dataset.tab === target ? "true" : "false");
+          });
+          ["live", "stats", "settings"].forEach((pane) => {
+            sr.getElementById(`pane-${pane}`).hidden = pane !== target;
+          });
+        });
       });
       const imgEl = sr.getElementById("snapshot-img");
       const emptyEl = sr.getElementById("snapshot-empty");
@@ -1165,6 +1381,9 @@ class BambuAIGuardPanel extends HTMLElement {
       sr.getElementById("layer-chip").textContent = `Layer ${a.layer ?? "—"} / ${a.total_layers ?? "—"}`;
       sr.getElementById("latency-chip").textContent = a.latency_ms ? `${a.latency_ms} ms` : "gemini-decision-1";
       sr.getElementById("details-text").textContent = a.details || "Ready.";
+      sr.getElementById("kpi-checks").textContent = String(a.total_inspections ?? 0);
+      sr.getElementById("kpi-failures").textContent = String(a.failures_detected ?? 0);
+      sr.getElementById("kpi-latency").textContent = a.latency_ms ? `${a.latency_ms} ms` : "—";
 
       this.#updateBar("bar-spaghetti", "val-spaghetti", a.spaghetti_pct);
       this.#updateBar("bar-warping", "val-warping", a.warping_pct);
@@ -1241,6 +1460,7 @@ class BambuAIGuardPanel extends HTMLElement {
       const ha = histObj.attributes || {};
       const total = ha.total_prints_recorded ?? histObj.state ?? 0;
       sr.getElementById("history-title").textContent = `Lifetime Print History (${total} prints)`;
+      sr.getElementById("kpi-prints").textContent = String(total);
 
       const table = sr.getElementById("history-table");
       const prints = Array.isArray(ha.recent_prints) ? ha.recent_prints : [];

@@ -699,14 +699,34 @@ PANEL_SHEET.replaceSync(`
 
   .unified-row {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    flex-direction: column;
+    gap: 10px;
     padding: 10px 12px;
     border-radius: 11px;
     background: var(--z-surface-2);
     border: 1px solid var(--z-border-soft);
+  }
+
+  .unified-row-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
     flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .inline-replay-drawer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--z-border-soft);
+    width: 100%;
+  }
+
+  .inline-replay-drawer[hidden] {
+    display: none;
   }
 
   .unified-left {
@@ -1117,20 +1137,23 @@ PANEL_TEMPLATE.innerHTML = `
           <button type="button" class="zest-btn secondary" id="btn-open-purge"><ha-icon icon="mdi:delete-sweep-outline"></ha-icon>Purge AI Logs…</button>
         </div>
       </h2>
-      <div class="slider-hint" style="margin-top:-6px;">Shows both your live <strong>AI Guarded</strong> prints (Completed / Aborted / Auto-Paused) and your <strong>Pre-Guard</strong> Bambu timelapses — click <strong>Simulate</strong> on any past timelapse to test your current AI settings (dry-run only).</div>
-      <div class="replay-banner" id="replay-banner" hidden></div>
-      <div class="chart-wrap" id="replay-chart-wrap" hidden>
-        <div class="chart-legend">
-          <span><i class="legend-dot" style="background:#ef4444;"></i>Spaghetti %</span>
-          <span><i class="legend-dot" style="background:#f59e0b;"></i>Warping %</span>
-          <span><i class="legend-dot" style="background:#8b5cf6;"></i>Detachment %</span>
-          <span><i class="legend-dot" style="background:var(--z-ink-2);"></i>Auto-Pause Threshold</span>
-        </div>
-        <svg class="chart-svg" id="replay-chart-svg" viewBox="0 0 640 150" preserveAspectRatio="none"></svg>
-      </div>
-      <div class="replay-grid" id="replay-grid"></div>
+      <div class="slider-hint" style="margin-top:-6px;">Shows both your live <strong>AI Guarded</strong> prints (Completed / Aborted / Auto-Paused) and your <strong>Pre-Guard</strong> Bambu timelapses — click <strong>Simulate</strong> on any past timelapse to expand the AI analysis right inside its row.</div>
       <div class="unified-list" id="unified-history-list">
         <div class="details-box">Loading print history…</div>
+      </div>
+      <!-- Reusable inline replay drawer moved into whichever print row is being simulated -->
+      <div class="inline-replay-drawer" id="inline-replay-drawer" hidden>
+        <div class="replay-banner" id="replay-banner" hidden></div>
+        <div class="chart-wrap" id="replay-chart-wrap" hidden>
+          <div class="chart-legend">
+            <span><i class="legend-dot" style="background:#ef4444;"></i>Spaghetti %</span>
+            <span><i class="legend-dot" style="background:#f59e0b;"></i>Warping %</span>
+            <span><i class="legend-dot" style="background:#8b5cf6;"></i>Detachment %</span>
+            <span><i class="legend-dot" style="background:var(--z-ink-2);"></i>Auto-Pause Threshold</span>
+          </div>
+          <svg class="chart-svg" id="replay-chart-svg" viewBox="0 0 640 150" preserveAspectRatio="none"></svg>
+        </div>
+        <div class="replay-grid" id="replay-grid"></div>
       </div>
     </div>
   </div>
@@ -1265,6 +1288,7 @@ class BambuAIGuardPanel extends HTMLElement {
   #timelapses = [];
   #guardedPrints = [];
   #simulations = {};
+  #activeReplayVideoId = null;
   #pollTimer = null;
 
   constructor() {
@@ -1455,6 +1479,12 @@ class BambuAIGuardPanel extends HTMLElement {
     const container = sr.getElementById("unified-history-list");
     if (!container) return;
 
+    // Park the reusable inline replay drawer safely before re-rendering rows
+    const drawer = sr.getElementById("inline-replay-drawer");
+    if (drawer && drawer.parentElement !== container.parentElement) {
+      container.parentElement.append(drawer);
+    }
+
     const totalMerged = this.#guardedPrints.length + this.#timelapses.length;
     sr.getElementById("history-title").textContent =
       `Unified Print History (${totalMerged} prints · ${this.#guardedPrints.length} AI Guarded)`;
@@ -1515,7 +1545,10 @@ class BambuAIGuardPanel extends HTMLElement {
 
       info.append(title, badges);
       left.append(info);
-      row.append(left);
+      const head = document.createElement("div");
+      head.className = "unified-row-head";
+      head.append(left);
+      row.append(head);
       rows.push(row);
     }
 
@@ -1523,6 +1556,7 @@ class BambuAIGuardPanel extends HTMLElement {
     for (const item of this.#timelapses.slice(0, 25)) {
       const row = document.createElement("div");
       row.className = "unified-row";
+      row.dataset.videoId = item.id;
 
       const left = document.createElement("div");
       left.className = "unified-left";
@@ -1575,25 +1609,44 @@ class BambuAIGuardPanel extends HTMLElement {
       simBtn.type = "button";
       simBtn.className = "zest-btn secondary";
       simBtn.innerHTML = `<ha-icon icon="mdi:play-circle-outline"></ha-icon>${sim ? "Re-Simulate" : "Simulate"}`;
-      simBtn.addEventListener("click", () => this.#startReplay(item.id));
+      simBtn.addEventListener("click", () => this.#startReplay(item.id, row));
 
-      row.append(left, simBtn);
+      const head = document.createElement("div");
+      head.className = "unified-row-head";
+      head.append(left, simBtn);
+      row.append(head);
+      if (this.#activeReplayVideoId === item.id && drawer) {
+        drawer.hidden = false;
+        row.append(drawer);
+      }
       rows.push(row);
     }
 
     container.replaceChildren(...rows);
   }
 
-  async #startReplay(videoId) {
+  async #startReplay(videoId, targetRow = null) {
     if (!this.#hass || !videoId) return;
     const sr = this.shadowRoot;
+    this.#activeReplayVideoId = videoId;
+    const drawer = sr.getElementById("inline-replay-drawer");
     const banner = sr.getElementById("replay-banner");
+    const chartWrap = sr.getElementById("replay-chart-wrap");
     const grid = sr.getElementById("replay-grid");
+
+    const rowEl =
+      targetRow ||
+      sr.querySelector(`.unified-row[data-video-id="${CSS.escape(videoId)}"]`);
+    if (drawer && rowEl) {
+      drawer.hidden = false;
+      rowEl.append(drawer);
+    }
+
     grid.replaceChildren();
+    if (chartWrap) chartWrap.hidden = true;
     banner.hidden = false;
     banner.removeAttribute("data-state");
     banner.textContent = "⏳ Loading timelapse video and extracting checkpoint frames…";
-    banner.scrollIntoView({ behavior: "smooth", block: "nearest" });
 
     try {
       await this.#hass.callApi("POST", "bambu_ai_guard/simulate", {

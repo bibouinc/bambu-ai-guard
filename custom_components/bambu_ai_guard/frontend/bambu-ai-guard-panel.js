@@ -513,12 +513,18 @@ PANEL_TEMPLATE.innerHTML = `
       <h2 class="card-title"><span>Guard Controls &amp; Frequency</span></h2>
 
       <div class="control-row">
-        <label for="ctrl-autopause">Auto-Pause on Failure</label>
+        <div>
+          <label for="ctrl-autopause">Auto-Pause on Failure</label>
+          <div class="slider-hint">Automatically pauses your printer if a critical failure is detected.</div>
+        </div>
         <input type="checkbox" id="ctrl-autopause" />
       </div>
 
       <div class="control-row">
-        <label for="ctrl-median">3-Frame Nozzle Erasing Filter</label>
+        <div>
+          <label for="ctrl-median">Hide Printhead in Photos</label>
+          <div class="slider-hint">Blends 3 quick photos to erase the moving toolhead (ON for P1P/P1S/X1C; OFF for A1/A1 Mini).</div>
+        </div>
         <input type="checkbox" id="ctrl-median" />
       </div>
 

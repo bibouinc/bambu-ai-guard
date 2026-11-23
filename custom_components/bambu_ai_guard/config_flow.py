@@ -8,6 +8,7 @@ from typing import Any
 import voluptuous as vol
 
 from homeassistant import config_entries
+from homeassistant.components import ssdp
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import device_registry as dr, entity_registry as er, selector
@@ -74,13 +75,26 @@ def _get_bambu_printer_devices(hass: HomeAssistant) -> list[dr.DeviceEntry]:
     return printers
 
 
-def _discover_bambu_ssdp_sync(timeout: float = 1.5) -> dict[str, str]:
-    """Quick UDP SSDP probe / listener on port 2021 for Bambu Lab printers on LAN."""
+def _discover_bambu_ssdp_sync(timeout: float = 3.5) -> dict[str, str]:
+    """Listen on Bambu Lab SSDP multicast (239.255.255.250:2021) for printer IP, Serial & Model."""
+    import struct
+
     discovered: dict[str, str] = {}
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     try:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        if hasattr(socket, "SO_REUSEPORT"):
+            try:
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+            except OSError:
+                pass
         sock.bind(("", 2021))
+        # Join SSDP multicast group so Bambu broadcasts are received inside Docker/Linux
+        mreq = struct.pack("4sl", socket.inet_aton("239.255.255.250"), socket.INADDR_ANY)
+        try:
+            sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+        except OSError:
+            pass
         sock.settimeout(timeout)
         data, addr = sock.recvfrom(4096)
         msg = data.decode("utf-8", errors="ignore")
@@ -92,6 +106,8 @@ def _discover_bambu_ssdp_sync(timeout: float = 1.5) -> dict[str, str]:
                     discovered["serial"] = line.split(":", 1)[1].strip().split("::")[0]
                 elif low.startswith("devname.bambu.com:"):
                     discovered["name"] = line.split(":", 1)[1].strip()
+                elif low.startswith("devmodel.bambu.com:"):
+                    discovered["model"] = line.split(":", 1)[1].strip()
     except Exception:  # noqa: BLE001
         pass
     finally:
@@ -104,6 +120,34 @@ class BambuAIGuardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Bambu AI Guard."""
 
     VERSION = 1
+
+    def __init__(self) -> None:
+        """Initialize the config flow."""
+        self._ssdp_ip: str = ""
+        self._ssdp_serial: str = ""
+        self._ssdp_model: str = "P1P"
+
+    async def async_step_ssdp(
+        self, discovery_info: ssdp.SsdpServiceInfo
+    ) -> FlowResult:
+        """Handle automatic SSDP discovery of a Bambu Lab printer on the LAN."""
+        host = discovery_info.ssdp_headers.get("Location", "") or ""
+        if not host and discovery_info.upnp:
+            host = str(discovery_info.upnp.get("host", ""))
+        serial = str(discovery_info.ssdp_usn or "").split("::")[0].strip().upper()
+        if serial:
+            await self.async_set_unique_id(f"{DOMAIN}_{serial}")
+            self._abort_if_unique_id_configured()
+            model, _ = detect_printer_model_and_kinematics(None, serial)
+            self._ssdp_serial = serial
+            self._ssdp_model = model
+        if host:
+            self._ssdp_ip = host.replace("http://", "").replace("https://", "").split(":")[0].split("/")[0]
+
+        self.context["title_placeholders"] = {
+            "name": f"Bambu Lab {self._ssdp_model} ({self._ssdp_ip or self._ssdp_serial})"
+        }
+        return await self.async_step_user()
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -208,40 +252,40 @@ class BambuAIGuardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
             )
         else:
-            # Mode B: Check if any camera.* entity exists in Home Assistant, or fallback to auto-discovered LAN
-            ent_reg = er.async_get(self.hass)
-            has_cameras = any(
-                e.domain in ("camera", "image") for e in ent_reg.entities.values()
+            # Mode B: Standalone Direct LAN with automatic SSDP multicast discovery
+            ssdp_info: dict[str, str] = {}
+            if not self._ssdp_ip:
+                ssdp_info = await self.hass.async_add_executor_job(
+                    _discover_bambu_ssdp_sync, 3.5
+                )
+            default_ip = self._ssdp_ip or ssdp_info.get("ip", "")
+            default_serial = self._ssdp_serial or ssdp_info.get("serial", "")
+            detected_model, _ = detect_printer_model_and_kinematics(
+                ssdp_info.get("model") or self._ssdp_model, default_serial
             )
-            ssdp_info = await self.hass.async_add_executor_job(
-                _discover_bambu_ssdp_sync, 0.8
-            )
+            if detected_model not in ("P1P", "P1S", "A1", "A1 Mini", "X1C", "X1E"):
+                detected_model = "P1P"
+
             schema_fields[
-                vol.Required(CONF_PRINTER_MODEL, default="P1P")
+                vol.Required(CONF_PRINTER_MODEL, default=detected_model)
             ] = selector.SelectSelector(
                 selector.SelectSelectorConfig(
                     options=["P1P", "P1S", "A1", "A1 Mini", "X1C", "X1E"],
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             )
-            if has_cameras:
-                schema_fields[
-                    vol.Optional(CONF_CAMERA_ENTITY)
-                ] = selector.EntitySelector(
-                    selector.EntitySelectorConfig(domain=["camera", "image"])
-                )
             schema_fields[
-                vol.Optional(
+                vol.Required(
                     CONF_PRINTER_IP,
-                    default=ssdp_info.get("ip", ""),
+                    default=default_ip,
                 )
             ] = selector.TextSelector(
                 selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT)
             )
             schema_fields[
-                vol.Optional(
+                vol.Required(
                     CONF_ACCESS_CODE,
-                    default=ssdp_info.get("access_code", ""),
+                    default="",
                 )
             ] = selector.TextSelector(
                 selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
@@ -249,7 +293,7 @@ class BambuAIGuardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             schema_fields[
                 vol.Optional(
                     CONF_PRINTER_SERIAL,
-                    default=ssdp_info.get("serial", ""),
+                    default=default_serial,
                 )
             ] = selector.TextSelector(
                 selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT)

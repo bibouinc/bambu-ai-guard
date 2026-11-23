@@ -33,10 +33,10 @@ Only the flagship X1C ships with built-in AI spaghetti detection, and even then,
 
 ## How It Works (In 3 Simple Steps)
 
-### 1. Plug Into Your Existing Home Assistant Setup (30 Seconds)
-If you already use the popular **`ha-bambulab`** integration in Home Assistant, **Bambu AI Guard discovers your printer automatically**.
-- **No IP address to type, no serial number to hunt down, and no second network connection** overloading your printer.
-- Just pick your printer from the dropdown, paste your free **Google Gemini API Key**, and click **Submit**. *(Don't use `ha-bambulab`? It also works standalone over LAN!).*
+### 1. Works 100% Standalone Over Wi-Fi (30-Second Setup)
+**Bambu AI Guard works completely standalone**—no other integration, no broker, and no cloud bridge required:
+- Enter your printer's **LAN IP** and **8-character Access Code** (found right on your printer screen), paste your free **Google Gemini API Key**, and click **Submit**.
+- *(Already using `ha-bambulab` in Home Assistant? Bambu AI Guard automatically detects your printer from it as an optional 1-click shortcut so you don't even have to re-type your IP or Access Code!)*
 
 ### 2. Smart Checkpoints—Only When It Matters
 Unlike continuous video streams that eat bandwidth 24/7, Bambu AI Guard sleeps at **0% CPU** when your printer is idle and wakes up only at critical moments:

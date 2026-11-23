@@ -21,6 +21,30 @@ def _get_first_coordinator(hass: HomeAssistant) -> BambuAIGuardCoordinator | Non
     return None
 
 
+class LiveFrameView(HomeAssistantView):
+    """HTTP API serving fresh single-frame live JPEG snapshots from the printer camera."""
+
+    url = "/api/bambu_ai_guard/live_frame"
+    name = "api:bambu_ai_guard:live_frame"
+    requires_auth = True
+
+    def __init__(self, hass: HomeAssistant) -> None:
+        self.hass = hass
+
+    async def get(self, request: web.Request) -> web.Response:
+        coord = _get_first_coordinator(self.hass)
+        if not coord:
+            return web.Response(status=404)
+        jpg = await coord.async_get_live_frame()
+        if not jpg:
+            return web.Response(status=503)
+        return web.Response(
+            body=jpg,
+            content_type="image/jpeg",
+            headers={"Cache-Control": "no-store, no-cache, must-revalidate"},
+        )
+
+
 class TimelapsesListView(HomeAssistantView):
     """HTTP API to list available previous print timelapses for replay simulation."""
 
@@ -122,6 +146,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if "replay_simulator" not in hass.data[DOMAIN]:
         simulator = PrintReplaySimulator()
         hass.data[DOMAIN]["replay_simulator"] = simulator
+        hass.http.register_view(LiveFrameView(hass))
         hass.http.register_view(TimelapsesListView(hass, simulator))
         hass.http.register_view(TimelapseThumbView(hass))
         hass.http.register_view(ReplaySimulateView(hass, simulator))

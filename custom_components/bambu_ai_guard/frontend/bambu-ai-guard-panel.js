@@ -341,6 +341,113 @@ PANEL_SHEET.replaceSync(`
     aspect-ratio: 16 / 9;
     display: grid;
     place-items: center;
+    content-visibility: auto;
+    contain-intrinsic-size: auto none auto 360px;
+  }
+
+  .viewport-top-overlay {
+    position: absolute;
+    inset: 12px 12px auto 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(185, 28, 28, 0.9);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+  }
+
+  .live-badge[hidden] {
+    display: none;
+  }
+
+  .live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #fff;
+    display: inline-block;
+    animation: live-pulse 1.4s ease-in-out infinite;
+  }
+
+  @keyframes live-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(0.8); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .live-dot { animation: none; }
+  }
+
+  .last-check-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 14px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    background: var(--z-surface-2);
+    border: 1px solid var(--z-border-soft);
+    font-size: 0.8rem;
+    color: var(--z-ink-2);
+  }
+
+  .last-check-bar strong {
+    color: var(--z-ink);
+  }
+
+  .recent-checks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 240px;
+    overflow-y: auto;
+  }
+
+  .recent-check-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px 12px;
+    padding: 8px 11px;
+    border-radius: 9px;
+    background: var(--z-surface-2);
+    border: 1px solid var(--z-border-soft);
+    font-size: 0.78rem;
+  }
+
+  .recent-check-row[data-status="FAILURE"] {
+    border-color: rgba(239, 68, 68, 0.55);
+  }
+
+  .recent-check-row[data-status="WARNING"] {
+    border-color: rgba(245, 158, 11, 0.55);
+  }
+
+  .recent-check-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    color: var(--z-ink);
+  }
+
+  .recent-check-meta {
+    color: var(--z-ink-2);
+    font-variant-numeric: tabular-nums;
   }
 
   .viewport img {
@@ -1081,15 +1188,26 @@ PANEL_TEMPLATE.innerHTML = `
     <div class="panel-card">
       <h2 class="card-title">
         <span class="label-with-icon"><ha-icon icon="mdi:camera-iris"></ha-icon>Live AI Camera Inspection</span>
-        <button type="button" class="zest-btn" id="btn-inspect"><ha-icon icon="mdi:magnify-scan"></ha-icon>Inspect Now (AI)</button>
+        <div class="actions-row">
+          <button type="button" class="zest-btn secondary" id="btn-live-toggle" aria-pressed="false"><ha-icon icon="mdi:video-outline"></ha-icon>Live View</button>
+          <button type="button" class="zest-btn" id="btn-inspect"><ha-icon icon="mdi:magnify-scan"></ha-icon>Inspect Now (AI)</button>
+        </div>
       </h2>
-      <div class="viewport">
+      <div class="viewport" id="live-viewport">
         <img id="snapshot-img" alt="Bambu AI Guard Snapshot" hidden />
         <div class="viewport-empty" id="snapshot-empty">Click "Inspect Now (AI)" to capture your first snapshot and verify your camera &amp; Gemini API connection.</div>
+        <div class="viewport-top-overlay">
+          <span class="live-badge" id="live-badge" hidden><i class="live-dot"></i>LIVE · AUTO-REFRESH</span>
+        </div>
         <div class="viewport-overlay">
           <span class="chip" id="layer-chip">Layer — / —</span>
           <span class="chip" id="latency-chip">gemini-decision-1</span>
         </div>
+      </div>
+
+      <div class="last-check-bar" id="last-check-bar">
+        <span class="label-with-icon"><ha-icon icon="mdi:clock-check-outline"></ha-icon><span><strong>Last Verification:</strong> <span id="last-check-time">Not yet verified</span></span></span>
+        <span id="last-check-meta">—</span>
       </div>
 
       <div class="metrics-grid">
@@ -1112,6 +1230,26 @@ PANEL_TEMPLATE.innerHTML = `
       </div>
 
       <div class="details-box" id="details-text">Waiting for first inspection...</div>
+    </div>
+
+    <div class="panel-card" style="margin-top: 14px;">
+      <h2 class="card-title">
+        <span class="label-with-icon"><ha-icon icon="mdi:chart-line"></ha-icon>Defect Probability Timeline &amp; Recent Checks</span>
+        <span class="slider-badge" id="live-checks-count">0 checks</span>
+      </h2>
+      <div class="chart-wrap" id="live-chart-wrap" hidden>
+        <div class="chart-legend">
+          <span><i class="legend-dot" style="background:#ef4444;"></i>Spaghetti %</span>
+          <span><i class="legend-dot" style="background:#f59e0b;"></i>Warping %</span>
+          <span><i class="legend-dot" style="background:#8b5cf6;"></i>Detachment %</span>
+          <span><i class="legend-dot" style="background:#0ea5e9;"></i>First-Layer %</span>
+          <span><i class="legend-dot" style="background:var(--z-ink-2);"></i>Auto-Pause Threshold</span>
+        </div>
+        <svg class="chart-svg" id="live-chart-svg" viewBox="0 0 640 155" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="recent-checks-list" id="live-recent-list">
+        <div class="details-box">No AI verifications recorded yet for this session. Checks will automatically plot here as layers progress.</div>
+      </div>
     </div>
   </div>
 
@@ -1298,8 +1436,19 @@ class BambuAIGuardPanel extends HTMLElement {
   #timelapses = [];
   #guardedPrints = [];
   #simulations = {};
+  #recentInspections = [];
   #activeReplayVideoId = null;
   #pollTimer = null;
+  #liveTimer = null;
+  #liveFetching = false;
+  #liveBlobUrl = null;
+  #liveModeOverride = null; // null = Auto (ON while printing), true = Force ON, false = Force OFF
+  #isPrinting = false;
+  #activeTab = "live";
+  #viewportSkipped = false;
+  #visibilityHandler = null;
+  #viewportObserver = null;
+  #lastCameraPictureUrl = null;
 
   constructor() {
     super();
@@ -1318,14 +1467,45 @@ class BambuAIGuardPanel extends HTMLElement {
       sr.querySelectorAll("[data-tab]").forEach((btn) => {
         btn.addEventListener("click", () => {
           const target = btn.dataset.tab;
+          this.#activeTab = target;
           sr.querySelectorAll("[data-tab]").forEach((b) => {
             b.setAttribute("aria-selected", b.dataset.tab === target ? "true" : "false");
           });
           ["live", "stats", "settings"].forEach((pane) => {
             sr.getElementById(`pane-${pane}`).hidden = pane !== target;
           });
+          this.#syncLivePolling();
         });
       });
+      sr.getElementById("btn-live-toggle").addEventListener("click", () => {
+        const currentlyOn = this.#isLiveActive();
+        this.#liveModeOverride = !currentlyOn;
+        if (!this.#liveModeOverride && this.#lastCameraPictureUrl) {
+          const img = sr.getElementById("snapshot-img");
+          img.setAttribute("src", this.#lastCameraPictureUrl);
+        }
+        this.#syncLivePolling();
+      });
+      const viewportEl = sr.getElementById("live-viewport");
+      if ("contentVisibility" in document.documentElement.style) {
+        viewportEl.addEventListener("contentvisibilityautostatechange", (event) => {
+          this.#viewportSkipped = Boolean(event.skipped);
+          this.#syncLivePolling();
+        });
+      } else if ("IntersectionObserver" in window) {
+        this.#viewportObserver = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              this.#viewportSkipped = !entry.isIntersecting;
+            }
+            this.#syncLivePolling();
+          },
+          { rootMargin: "200px" }
+        );
+        this.#viewportObserver.observe(viewportEl);
+      }
+      this.#visibilityHandler = () => this.#syncLivePolling();
+      document.addEventListener("visibilitychange", this.#visibilityHandler);
       const imgEl = sr.getElementById("snapshot-img");
       const emptyEl = sr.getElementById("snapshot-empty");
       imgEl.addEventListener("load", () => {
@@ -1454,6 +1634,221 @@ class BambuAIGuardPanel extends HTMLElement {
       clearInterval(this.#pollTimer);
       this.#pollTimer = null;
     }
+    this.#stopLiveTimer();
+    if (this.#liveBlobUrl) {
+      URL.revokeObjectURL(this.#liveBlobUrl);
+      this.#liveBlobUrl = null;
+    }
+    if (this.#visibilityHandler) {
+      document.removeEventListener("visibilitychange", this.#visibilityHandler);
+      this.#visibilityHandler = null;
+    }
+    if (this.#viewportObserver) {
+      this.#viewportObserver.disconnect();
+      this.#viewportObserver = null;
+    }
+  }
+
+  #isLiveActive() {
+    if (this.#liveModeOverride !== null) return this.#liveModeOverride;
+    return this.#isPrinting;
+  }
+
+  #stopLiveTimer() {
+    if (this.#liveTimer) {
+      clearInterval(this.#liveTimer);
+      this.#liveTimer = null;
+    }
+  }
+
+  #syncLivePolling() {
+    const sr = this.shadowRoot;
+    if (!sr) return;
+    const active = this.#isLiveActive();
+    const badge = sr.getElementById("live-badge");
+    const toggleBtn = sr.getElementById("btn-live-toggle");
+    if (badge) badge.hidden = !active;
+    if (toggleBtn) {
+      toggleBtn.setAttribute("aria-pressed", active ? "true" : "false");
+      toggleBtn.classList.toggle("secondary", !active);
+      toggleBtn.innerHTML = active
+        ? `<ha-icon icon="mdi:video"></ha-icon>Live View: ON`
+        : `<ha-icon icon="mdi:video-outline"></ha-icon>Live View`;
+    }
+
+    const shouldPoll =
+      active &&
+      this.#activeTab === "live" &&
+      !this.#viewportSkipped &&
+      document.visibilityState === "visible";
+
+    if (shouldPoll) {
+      if (!this.#liveTimer) {
+        this.#fetchLiveFrame();
+        this.#liveTimer = setInterval(() => this.#fetchLiveFrame(), 2500);
+      }
+    } else {
+      this.#stopLiveTimer();
+    }
+  }
+
+  async #fetchLiveFrame() {
+    if (!this.#hass || this.#liveFetching || !this.#isLiveActive()) return;
+    this.#liveFetching = true;
+    try {
+      const url = `/api/bambu_ai_guard/live_frame?t=${Date.now()}`;
+      const resp = this.#hass.fetchWithAuth
+        ? await this.#hass.fetchWithAuth(url)
+        : await fetch(url, {
+            headers: this.#hass.auth?.data?.access_token
+              ? { Authorization: `Bearer ${this.#hass.auth.data.access_token}` }
+              : {},
+          });
+      if (!resp.ok) return;
+      const blob = await resp.blob();
+      if (!blob || blob.size < 500) return;
+      const nextUrl = URL.createObjectURL(blob);
+      const preload = new Image();
+      preload.src = nextUrl;
+      try {
+        await preload.decode();
+      } catch (_) {}
+      if (!this.#isLiveActive()) {
+        URL.revokeObjectURL(nextUrl);
+        return;
+      }
+      const sr = this.shadowRoot;
+      const img = sr?.getElementById("snapshot-img");
+      const empty = sr?.getElementById("snapshot-empty");
+      if (img) {
+        const prevUrl = this.#liveBlobUrl;
+        this.#liveBlobUrl = nextUrl;
+        img.src = nextUrl;
+        img.hidden = false;
+        if (empty) empty.hidden = true;
+        if (prevUrl) URL.revokeObjectURL(prevUrl);
+      } else {
+        URL.revokeObjectURL(nextUrl);
+      }
+    } catch (_) {
+      // Silently skip transient camera frame fetch errors
+    } finally {
+      this.#liveFetching = false;
+    }
+  }
+
+  #formatRelativeTime(isoStr) {
+    if (!isoStr) return "Not yet verified";
+    const dt = new Date(isoStr);
+    if (Number.isNaN(dt.getTime())) return isoStr;
+    const diffSec = Math.max(0, Math.round((Date.now() - dt.getTime()) / 1000));
+    const clock = dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    if (diffSec < 10) return `${clock} (just now)`;
+    if (diffSec < 60) return `${clock} (${diffSec}s ago)`;
+    const diffMin = Math.round(diffSec / 60);
+    if (diffMin < 60) return `${clock} (${diffMin}m ago)`;
+    const diffHr = Math.round(diffMin / 60);
+    return `${clock} (${diffHr}h ago)`;
+  }
+
+  #renderLiveTimeline() {
+    const sr = this.shadowRoot;
+    if (!sr) return;
+    const listEl = sr.getElementById("live-recent-list");
+    const chartWrap = sr.getElementById("live-chart-wrap");
+    const svg = sr.getElementById("live-chart-svg");
+    const countBadge = sr.getElementById("live-checks-count");
+    if (!listEl || !chartWrap || !svg) return;
+
+    const checks = Array.isArray(this.#recentInspections) ? this.#recentInspections : [];
+    if (countBadge) {
+      countBadge.textContent = `${checks.length} check${checks.length === 1 ? "" : "s"}`;
+    }
+
+    if (checks.length === 0) {
+      chartWrap.hidden = true;
+      listEl.innerHTML = `<div class="details-box">No AI verifications recorded yet for this session. Checks will automatically plot here as layers progress.</div>`;
+      return;
+    }
+
+    // Chronological order for chart (recent_inspections comes newest-first from sensor)
+    const points = [...checks].reverse();
+    chartWrap.hidden = false;
+
+    const W = 640;
+    const H = 155;
+    const padL = 34;
+    const padR = 14;
+    const padT = 12;
+    const padB = 22;
+    const innerW = W - padL - padR;
+    const innerH = H - padT - padB;
+    const threshVal = Number(sr.getElementById("ctrl-thresh")?.value || 80);
+    const xAt = (i) =>
+      points.length === 1 ? padL + innerW / 2 : padL + (i / (points.length - 1)) * innerW;
+    const yAt = (pct) =>
+      padT + innerH - (Math.max(0, Math.min(100, Number(pct || 0))) / 100) * innerH;
+
+    const makeSeries = (key, color, width = 2) => {
+      if (points.length === 1) {
+        return `<circle cx="${xAt(0).toFixed(1)}" cy="${yAt(points[0][key]).toFixed(1)}" r="4.5" fill="${color}" />`;
+      }
+      const d = points
+        .map((pt, i) => `${i === 0 ? "M" : "L"}${xAt(i).toFixed(1)},${yAt(pt[key]).toFixed(1)}`)
+        .join(" ");
+      const dots = points
+        .map(
+          (pt, i) =>
+            `<circle cx="${xAt(i).toFixed(1)}" cy="${yAt(pt[key]).toFixed(1)}" r="2.6" fill="${color}" />`
+        )
+        .join("");
+      return `<path d="${d}" fill="none" stroke="${color}" stroke-width="${width}" stroke-linejoin="round" />${dots}`;
+    };
+
+    const threshY = yAt(threshVal).toFixed(1);
+    const firstLabel = points[0].layer != null ? `L${points[0].layer}` : "#1";
+    const lastLabel =
+      points[points.length - 1].layer != null ? `L${points[points.length - 1].layer}` : `#${points.length}`;
+
+    svg.innerHTML = `
+      <line x1="${padL}" y1="${yAt(100)}" x2="${W - padR}" y2="${yAt(100)}" stroke="currentColor" stroke-opacity="0.12" />
+      <line x1="${padL}" y1="${yAt(50)}" x2="${W - padR}" y2="${yAt(50)}" stroke="currentColor" stroke-opacity="0.12" />
+      <line x1="${padL}" y1="${yAt(0)}" x2="${W - padR}" y2="${yAt(0)}" stroke="currentColor" stroke-opacity="0.2" />
+      <line x1="${padL}" y1="${threshY}" x2="${W - padR}" y2="${threshY}" stroke="currentColor" stroke-opacity="0.5" stroke-dasharray="5 4" stroke-width="1.5" />
+      <text x="4" y="${yAt(100) + 4}" font-size="10" fill="currentColor" opacity="0.6">100%</text>
+      <text x="8" y="${yAt(50) + 4}" font-size="10" fill="currentColor" opacity="0.6">50%</text>
+      <text x="12" y="${yAt(0) + 3}" font-size="10" fill="currentColor" opacity="0.6">0%</text>
+      <text x="${padL}" y="${H - 5}" font-size="10" fill="currentColor" opacity="0.65">${firstLabel}</text>
+      <text x="${W - padR}" y="${H - 5}" font-size="10" fill="currentColor" opacity="0.65" text-anchor="end">${lastLabel}</text>
+      ${makeSeries("first_layer_pct", "#0ea5e9", 1.8)}
+      ${makeSeries("warping_pct", "#f59e0b", 2)}
+      ${makeSeries("detachment_pct", "#8b5cf6", 2)}
+      ${makeSeries("spaghetti_pct", "#ef4444", 2.5)}
+    `;
+
+    // Render newest-first recent checks feed
+    listEl.replaceChildren(
+      ...checks.slice(0, 15).map((chk) => {
+        const row = document.createElement("div");
+        row.className = "recent-check-row";
+        row.setAttribute("data-status", chk.status || "OK");
+        const icon = chk.status === "FAILURE" ? "🚨" : chk.status === "WARNING" ? "⚠️" : "✅";
+        const clock = chk.timestamp
+          ? new Date(chk.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+          : "—";
+        const left = document.createElement("div");
+        left.className = "recent-check-left";
+        left.textContent = `${icon} ${clock} · Layer ${chk.layer ?? "—"}/${chk.total_layers ?? "—"}`;
+
+        const right = document.createElement("div");
+        right.className = "recent-check-meta";
+        const lat = chk.latency_ms ? ` · ${chk.latency_ms}ms` : "";
+        right.textContent = `Spaghetti ${chk.spaghetti_pct ?? 0}% · Warp ${chk.warping_pct ?? 0}% · Detach ${chk.detachment_pct ?? 0}% · L1 ${chk.first_layer_pct ?? 0}%${lat}`;
+
+        row.append(left, right);
+        return row;
+      })
+    );
   }
 
   async #loadTimelapses() {
@@ -1971,9 +2366,34 @@ class BambuAIGuardPanel extends HTMLElement {
       pill.textContent = st;
       pill.setAttribute("data-status", st);
       sr.getElementById("panel-title").textContent = `Bambu AI Guard · ${a.printer_model || "Printer"}`;
-      sr.getElementById("layer-chip").textContent = `Layer ${a.layer ?? "—"} / ${a.total_layers ?? "—"}`;
+      const dispLayer = a.is_printing && a.current_layer != null ? a.current_layer : a.layer;
+      const dispTotal = a.is_printing && a.current_total_layers ? a.current_total_layers : a.total_layers;
+      const printPrefix = a.is_printing && a.print_name ? `${a.print_name} · ` : "";
+      sr.getElementById("layer-chip").textContent = `${printPrefix}Layer ${dispLayer ?? "—"} / ${dispTotal ?? "—"}`;
       sr.getElementById("latency-chip").textContent = a.latency_ms ? `${a.latency_ms} ms` : "gemini-decision-1";
       sr.getElementById("details-text").textContent = a.details || "Ready.";
+
+      const lastTimeEl = sr.getElementById("last-check-time");
+      const lastMetaEl = sr.getElementById("last-check-meta");
+      if (lastTimeEl) {
+        lastTimeEl.textContent = this.#formatRelativeTime(a.last_updated);
+      }
+      if (lastMetaEl) {
+        const parts = [];
+        if (a.layer != null) parts.push(`Checked at L${a.layer}/${a.total_layers ?? "—"}`);
+        if (a.trigger_reason) parts.push(a.trigger_reason);
+        if (a.latency_ms) parts.push(`${a.latency_ms} ms`);
+        lastMetaEl.textContent = parts.length ? parts.join(" · ") : "—";
+      }
+
+      const wasPrinting = this.#isPrinting;
+      this.#isPrinting = Boolean(a.is_printing);
+      if (wasPrinting !== this.#isPrinting) {
+        // Reset manual override when print state transitions so Auto kicks in naturally
+        this.#liveModeOverride = null;
+      }
+      this.#syncLivePolling();
+
       const callsToday = a.calls_today ?? a.total_inspections ?? 0;
       sr.getElementById("kpi-checks").textContent = a.rate_limited
         ? `${callsToday} (429 Limit)`
@@ -1989,10 +2409,13 @@ class BambuAIGuardPanel extends HTMLElement {
 
     const camObj = this.#entityMap.camera ? this.#hass.states[this.#entityMap.camera] : null;
     if (camObj && camObj.attributes && camObj.attributes.entity_picture) {
-      const img = sr.getElementById("snapshot-img");
       const url = camObj.attributes.entity_picture;
-      if (img.getAttribute("src") !== url) {
-        img.setAttribute("src", url);
+      this.#lastCameraPictureUrl = url;
+      if (!this.#isLiveActive()) {
+        const img = sr.getElementById("snapshot-img");
+        if (img.getAttribute("src") !== url) {
+          img.setAttribute("src", url);
+        }
       }
     }
 
@@ -2055,7 +2478,9 @@ class BambuAIGuardPanel extends HTMLElement {
     if (histObj) {
       const ha = histObj.attributes || {};
       this.#guardedPrints = Array.isArray(ha.recent_prints) ? ha.recent_prints : [];
+      this.#recentInspections = Array.isArray(ha.recent_inspections) ? ha.recent_inspections : [];
       this.#simulations = ha.simulations && typeof ha.simulations === "object" ? ha.simulations : {};
+      this.#renderLiveTimeline();
       this.#renderUnifiedHistory();
     }
   }

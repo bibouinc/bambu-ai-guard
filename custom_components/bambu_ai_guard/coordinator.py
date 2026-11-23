@@ -199,6 +199,9 @@ class BambuAIGuardCoordinator(DataUpdateCoordinator[InspectionVerdict]):
         )
 
         self.latest_composite_jpeg: bytes | None = None
+        self._live_frame_bytes: bytes | None = None
+        self._live_frame_ts: float = 0.0
+        self._live_frame_lock = asyncio.Lock()
         self.last_checked_layer: int = -1
         self.last_check_monotonic: float = 0.0
         self.layer1_checks_done: int = 0
@@ -337,7 +340,7 @@ class BambuAIGuardCoordinator(DataUpdateCoordinator[InspectionVerdict]):
                 if "gcode_state" in p:
                     new_st = str(p["gcode_state"]).lower()
                     self._direct_status = new_st
-                    if new_st != prev_status and new_st in ("finish", "failed", "idle"):
+                    if new_st != prev_status:
                         self.hass.loop.call_soon_threadsafe(
                             self._handle_direct_status_change, new_st
                         )
@@ -367,17 +370,20 @@ class BambuAIGuardCoordinator(DataUpdateCoordinator[InspectionVerdict]):
     @callback
     def _handle_direct_status_change(self, new_status: str) -> None:
         """Finalize active print record when direct LAN MQTT reports FINISH or FAILED (aborted)."""
-        self.last_checked_layer = -1
-        self.layer1_checks_done = 0
-        if self._layer1_task and not self._layer1_task.done():
-            self._layer1_task.cancel()
-        self.hass.async_create_task(
-            self.history.async_finish_active_print(new_status)
-        )
+        if new_status in ("finish", "failed", "idle"):
+            self.last_checked_layer = -1
+            self.layer1_checks_done = 0
+            if self._layer1_task and not self._layer1_task.done():
+                self._layer1_task.cancel()
+            self.hass.async_create_task(
+                self.history.async_finish_active_print(new_status)
+            )
+        self.async_update_listeners()
 
     @callback
     def _handle_direct_layer_change(self, layer: int) -> None:
         """Handle layer transition coming from direct LAN MQTT."""
+        self.async_update_listeners()
         if layer < self.last_checked_layer:
             self.last_checked_layer = -1
             self.layer1_checks_done = 0
@@ -542,9 +548,11 @@ class BambuAIGuardCoordinator(DataUpdateCoordinator[InspectionVerdict]):
                 self.hass.async_create_task(
                     self.history.async_finish_active_print(status_val)
                 )
+            self.async_update_listeners()
             return
 
         if entity_id == self.layer_entity:
+            self.async_update_listeners()
             try:
                 layer = int(float(new_state.state))
             except (TypeError, ValueError):
@@ -614,6 +622,25 @@ class BambuAIGuardCoordinator(DataUpdateCoordinator[InspectionVerdict]):
             )
 
         return None
+
+    async def async_get_live_frame(self) -> bytes | None:
+        """Capture a fresh single live frame (throttled to ~1.8s) without blocking AI bursts."""
+        now = time.monotonic()
+        if self._inspect_lock.locked():
+            return self._live_frame_bytes or self.latest_composite_jpeg
+        if self._live_frame_bytes and (now - self._live_frame_ts) < 1.8:
+            return self._live_frame_bytes
+
+        async with self._live_frame_lock:
+            now2 = time.monotonic()
+            if self._live_frame_bytes and (now2 - self._live_frame_ts) < 1.8:
+                return self._live_frame_bytes
+            frame = await self._async_capture_single_frame()
+            if frame:
+                self._live_frame_bytes = frame
+                self._live_frame_ts = time.monotonic()
+                return frame
+            return self._live_frame_bytes or self.latest_composite_jpeg
 
     async def async_capture_inspection_frame(self) -> tuple[bytes | None, int]:
         """Capture either a 3-frame temporal median composite (CoreXY) or single crisp frame (A1 Bed-Slinger)."""
